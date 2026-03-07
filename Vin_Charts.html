@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>VSA Renko</title>
+<script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg:       #090b0f;
+    --bg2:      #0f1117;
+    --bg3:      #161a23;
+    --border:   #252d3d;
+    --border2:  #2e3a50;
+    --text:     #c8d4e8;
+    --text2:    #7a8fa8;
+    --accent:   #3d8ef0;
+    --header-h: 44px;
+    --tabs1-h:  40px;
+    --tabs2-h:  36px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%; width: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  }
+
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  /* ---- HEADER ---- */
+  .header {
+    height: var(--header-h);
+    min-height: var(--header-h);
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 8px;
+    flex-shrink: 0;
+    z-index: 10;
+  }
+  .header-logo {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--text2);
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+  .header-sep {
+    width: 1px; height: 16px;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+  .header-inst {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--text);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+  }
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--border2);
+    flex-shrink: 0;
+    transition: background 0.3s, box-shadow 0.3s;
+  }
+  .status-dot.live {
+    background: #3df07a;
+    box-shadow: 0 0 7px #3df07a;
+  }
+
+  /* ---- TAB ROWS ---- */
+  .tab-row {
+    display: flex;
+    align-items: center;
+    overflow-x: auto;
+    flex-shrink: 0;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 8px;
+    gap: 3px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tab-row::-webkit-scrollbar { display: none; }
+
+  .inst-tabs { height: var(--tabs1-h); min-height: var(--tabs1-h); }
+  .size-tabs  { height: var(--tabs2-h); min-height: var(--tabs2-h); }
+
+  .tab {
+    height: 26px;
+    padding: 0 10px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    background: transparent;
+    font-family: inherit;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: all 0.12s;
+    color: var(--text2);
+  }
+  .inst-tabs .tab { font-size: 11px; }
+  .size-tabs .tab { font-size: 10px; }
+
+  .tab:active { color: var(--text); }
+  .tab.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  /* ---- CHART AREA ---- */
+  .chart-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+    position: relative;
+  }
+
+  #price-panel  { flex-shrink: 0; min-height: 80px; overflow: hidden; }
+  #volume-panel { flex-shrink: 0; min-height: 50px; overflow: hidden; }
+
+  /* ---- DRAG HANDLE ---- */
+  .drag-handle {
+    height: 12px; min-height: 12px;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: row-resize; flex-shrink: 0;
+    user-select: none; -webkit-user-select: none; touch-action: none;
+  }
+  .grip {
+    width: 24px; height: 2px;
+    background: var(--border2); border-radius: 1px;
+  }
+  .drag-handle:active .grip { background: var(--accent); }
+
+  /* ---- LOADING OVERLAY ---- */
+  .loading-overlay {
+    position: absolute; inset: 0;
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 10px; z-index: 20;
+  }
+  .loading-overlay.hidden { display: none; }
+  .spinner {
+    width: 26px; height: 26px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.55s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 10px; color: var(--text2); letter-spacing: 0.12em; }
+
+  /* ---- EMPTY STATE ---- */
+  .empty-state {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 8px;
+  }
+  .empty-text { font-size: 10px; color: var(--text2); letter-spacing: 0.12em; }
+
+  /* ---- TOAST ---- */
+  .toast {
+    position: fixed; bottom: 20px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #3d1515; border: 1px solid #7a2020; color: #ff8080;
+    font-size: 10px; padding: 7px 14px; border-radius: 5px;
+    letter-spacing: 0.06em; transition: transform 0.25s; z-index: 100;
+    white-space: nowrap; pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-logo">VSA</div>
+    <div class="header-sep"></div>
+    <div class="header-inst" id="header-inst">—</div>
+    <div class="status-dot" id="status-dot"></div>
+  </div>
+
+  <!-- INSTRUMENT TABS (row 1) -->
+  <div class="tab-row inst-tabs" id="inst-tabs">
+    <div class="empty-state" style="flex-direction:row;gap:8px;">
+      <div class="spinner"></div>
+      <div class="empty-text">CONNECTING...</div>
+    </div>
+  </div>
+
+  <!-- BRICK SIZE TABS (row 2) -->
+  <div class="tab-row size-tabs" id="size-tabs"></div>
+
+  <!-- CHART AREA -->
+  <div class="chart-area">
+    <div id="price-panel"></div>
+    <div class="drag-handle" id="drag-handle"><div class="grip"></div></div>
+    <div id="volume-panel"></div>
+    <div class="loading-overlay" id="chart-loading">
+      <div class="spinner"></div>
+      <div class="loading-text">LOADING...</div>
+    </div>
+  </div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// CONFIG
+// ============================================================
+const SUPABASE_URL  = 'https://nyykpszexlxtapbnkxpw.supabase.co';
+const SUPABASE_KEY  = 'sb_publishable_1Qv50ww1Krv0_8-Tgtdn-g_ahEOIOoP';
+const SMA_PERIOD    = 26;
+const VOL_MA_PERIOD = 100;
+const BARS_TO_LOAD  = 500;
+
+// Instrument root order — controls tab order.
+// Only roots needed — survives quarterly rollovers.
+// Unknown roots auto-append alphabetically at end.
+const INSTRUMENT_ORDER = ['GC', 'CL', 'NQ', 'ES', 'RTY', 'ZB', 'EUR', 'GBP', 'JPY', 'AUD'];
+
+// Convert Supabase timestamp string to LightweightCharts UTCTimestamp (seconds)
+// Handles format: "2026-03-06 22:59:48.280 +0100"
+// LightweightCharts requires SECONDS since epoch, not milliseconds
+function parseTime(str) {
+  // "2026-03-06 22:59:48.280 +0100" → "2026-03-06T22:59:48.280+01:00"
+  const iso = str
+    .replace(' ', 'T')
+    .replace(/([+-]\d{2})(\d{2})$/, '$1:$2');
+  return Math.floor(new Date(iso).getTime() / 1000);
+}
+
+// VSA color map — matches BetterRealVolumeV1 / VsaRenkoShared.ClassifyBar exactly
+const VSA = {
+  Yellow:  '#f0c93d',
+  Magenta: '#e040fb',
+  Red:     '#f03d3d',
+  White:   '#e8edf5',
+  Lime:    '#3df07a',
+  Cyan:    '#3dd4f0',
+};
+// For price candles — Yellow treated as Cyan (no demand not tracked on Renko)
+function vsaColor(name) { return name === 'Yellow' ? VSA.Cyan : (VSA[name] || VSA.Cyan); }
+// For volume histogram — Yellow kept as Yellow
+function vsaVolColor(name) { return VSA[name] || VSA.Cyan; }
+
+// ============================================================
+// SUPABASE
+// ============================================================
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ============================================================
+// STATE
+// ============================================================
+let instruments  = [];   // sorted instrument full names e.g. ["CL APR26","GC APR26"]
+let allSizes     = {};   // { "GC APR26": [6,9,12], "CL APR26": [6,9,12] }
+let currentInst  = null;
+let currentSize  = null;
+let instData     = {};   // { brick_size: [rows...] } for currentInst
+let realtimeSub  = null;
+
+// Chart refs
+let priceChart   = null;
+let volChart     = null;
+let candleSeries = null;
+let smaSeries    = null;
+let volSeries    = null;
+let volMaSeries  = null;
+let lastBarTime  = 0;
+
+// Panel sizing
+let pricePanelH  = 0;
+let volPanelH    = 0;
+
+// ============================================================
+// INIT
+// ============================================================
+async function init() {
+  await loadMeta();
+}
+
+// ============================================================
+// LOAD META — distinct instruments + sizes from views
+// ============================================================
+async function loadMeta() {
+  try {
+    // Fetch distinct instrument names
+    const { data: instRows, error: e1 } = await db
+      .from('renko_instruments')
+      .select('instrument');
+    if (e1) throw e1;
+
+    // Fetch distinct instrument + size pairs
+    const { data: sizeRows, error: e2 } = await db
+      .from('renko_sizes')
+      .select('instrument, brick_size');
+    if (e2) throw e2;
+
+    // Build allSizes map
+    allSizes = {};
+    for (const r of sizeRows) {
+      if (!allSizes[r.instrument]) allSizes[r.instrument] = [];
+      allSizes[r.instrument].push(r.brick_size);
+    }
+    for (const k of Object.keys(allSizes))
+      allSizes[k].sort((a, b) => a - b);
+
+    // Sort instruments by INSTRUMENT_ORDER roots
+    instruments = instRows.map(r => r.instrument);
+    instruments.sort((a, b) => {
+      const ra = a.split(' ')[0];
+      const rb = b.split(' ')[0];
+      const ia = INSTRUMENT_ORDER.indexOf(ra);
+      const ib = INSTRUMENT_ORDER.indexOf(rb);
+      if (ia === -1 && ib === -1) return a.localeCompare(b);
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    });
+
+    renderInstTabs();
+
+    // Auto-select first instrument
+    if (instruments.length > 0) {
+      await selectInstrument(instruments[0]);
+    }
+  } catch(e) {
+    showToast('Failed to connect');
+    console.error(e);
+  }
+}
+
+// ============================================================
+// LOAD LAST 500 BARS FOR CURRENT INSTRUMENT
+// ============================================================
+async function loadInstrumentData(inst) {
+  showChartLoading(true);
+  instData = {};
+
+  const sizes = allSizes[inst] || [];
+
+  try {
+    // Fetch last BARS_TO_LOAD rows per brick size — fast thanks to the index
+    await Promise.all(sizes.map(async sz => {
+      const { data, error } = await db
+        .from('renko_bricks')
+        .select('*')
+        .eq('instrument', inst)
+        .eq('brick_size', sz)
+        .order('time', { ascending: false })
+        .order('id',   { ascending: false })
+        .limit(BARS_TO_LOAD);
+      if (error) throw error;
+      // Reverse so oldest→newest for chart
+      instData[sz] = data.reverse();
+    }));
+  } catch(e) {
+    showToast('Failed to load data');
+    console.error(e);
+  }
+
+  showChartLoading(false);
+}
+
+// ============================================================
+// REALTIME
+// ============================================================
+function subscribeRealtime(inst) {
+  if (realtimeSub) { db.removeChannel(realtimeSub); realtimeSub = null; }
+
+  realtimeSub = db
+    .channel('renko_rt_' + inst)
+    .on('postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'renko_bricks',
+        filter: 'instrument=eq.' + inst },
+      payload => handleInsert(payload.new))
+    .on('postgres_changes',
+      { event: 'DELETE', schema: 'public', table: 'renko_bricks' },
+      () => handleDelete())
+    .subscribe(status => {
+      document.getElementById('status-dot')
+        .classList.toggle('live', status === 'SUBSCRIBED');
+    });
+}
+
+function handleInsert(row) {
+  if (row.instrument !== currentInst) return;
+  const sz = row.brick_size;
+  if (!instData[sz]) instData[sz] = [];
+  instData[sz].push(row);
+
+  // Keep buffer capped at BARS_TO_LOAD
+  if (instData[sz].length > BARS_TO_LOAD)
+    instData[sz].shift();
+
+  if (sz === currentSize && candleSeries)
+    appendBar(row, instData[sz].length - 1);
+}
+
+function handleDelete() {
+  // NT8 restarted — reload after short delay to let Phase 1 complete
+  // (deferred — just reload data and rebuild chart)
+  setTimeout(async () => {
+    await loadInstrumentData(currentInst);
+    if (currentSize !== null) buildCharts(instData[currentSize] || []);
+  }, 3000);
+}
+
+// ============================================================
+// SELECT INSTRUMENT
+// ============================================================
+async function selectInstrument(inst) {
+  currentInst = inst;
+  currentSize = null;
+
+  document.getElementById('header-inst').textContent = inst;
+  renderInstTabs();
+  renderSizeTabs();
+
+  await loadInstrumentData(inst);
+  subscribeRealtime(inst);
+
+  // Auto-select first size
+  const sizes = allSizes[inst] || [];
+  if (sizes.length > 0) selectSize(sizes[0]);
+}
+
+// ============================================================
+// SELECT SIZE
+// ============================================================
+function selectSize(sz) {
+  currentSize = sz;
+  renderSizeTabs();
+  initPanelHeights();
+  buildCharts(instData[sz] || []);
+}
+
+// ============================================================
+// RENDER INSTRUMENT TABS
+// ============================================================
+function renderInstTabs() {
+  const el = document.getElementById('inst-tabs');
+  if (!instruments.length) {
+    el.innerHTML = '<div class="empty-text">NO DATA</div>';
+    return;
+  }
+  el.innerHTML = instruments.map(inst =>
+    `<button class="tab ${inst === currentInst ? 'active' : ''}"
+             onclick="selectInstrument('${inst.replace(/'/g,"\\'")}')">
+       ${inst.split(' ')[0]}
+     </button>`
+  ).join('');
+}
+
+// ============================================================
+// RENDER SIZE TABS
+// ============================================================
+function renderSizeTabs() {
+  const sizes = (currentInst && allSizes[currentInst]) ? allSizes[currentInst] : [];
+  document.getElementById('size-tabs').innerHTML = sizes.map(sz =>
+    `<button class="tab ${sz === currentSize ? 'active' : ''}"
+             onclick="selectSize(${sz})">${sz}</button>`
+  ).join('');
+}
+
+// ============================================================
+// PANEL HEIGHT + DRAG
+// ============================================================
+function initPanelHeights() {
+  const totalH = document.getElementById('price-panel').parentElement.clientHeight - 12;
+  pricePanelH  = Math.floor(totalH * 0.70);
+  volPanelH    = totalH - pricePanelH;
+  applyPanelHeights();
+}
+
+function applyPanelHeights() {
+  document.getElementById('price-panel').style.height  = pricePanelH + 'px';
+  document.getElementById('volume-panel').style.height = volPanelH   + 'px';
+}
+
+function resizeCharts() {
+  if (!priceChart || !volChart) return;
+  priceChart.resize(document.getElementById('price-panel').clientWidth,  pricePanelH);
+  volChart.resize(  document.getElementById('volume-panel').clientWidth, volPanelH);
+}
+
+// Drag handle
+(function() {
+  const handle = document.getElementById('drag-handle');
+  let dragging = false, startY = 0, startPH = 0, startVH = 0;
+
+  function start(e) {
+    dragging = true;
+    startY   = e.touches ? e.touches[0].clientY : e.clientY;
+    startPH  = pricePanelH;
+    startVH  = volPanelH;
+    e.preventDefault();
+  }
+  function move(e) {
+    if (!dragging) return;
+    const y   = e.touches ? e.touches[0].clientY : e.clientY;
+    const min = 50;
+    const max = startPH + startVH - min;
+    pricePanelH = Math.max(min, Math.min(max, startPH + (y - startY)));
+    volPanelH   = (startPH + startVH) - pricePanelH;
+    applyPanelHeights();
+    resizeCharts();
+    e.preventDefault();
+  }
+  function end() { dragging = false; }
+
+  handle.addEventListener('mousedown',  start, { passive: false });
+  handle.addEventListener('touchstart', start, { passive: false });
+  window.addEventListener('mousemove',  move,  { passive: false });
+  window.addEventListener('touchmove',  move,  { passive: false });
+  window.addEventListener('mouseup',    end);
+  window.addEventListener('touchend',   end);
+})();
+
+// ============================================================
+// BUILD CHARTS
+// ============================================================
+function destroyCharts() {
+  if (priceChart) { priceChart.remove(); priceChart = null; }
+  if (volChart)   { volChart.remove();   volChart   = null; }
+  candleSeries = smaSeries = volSeries = volMaSeries = null;
+  lastBarTime  = 0;
+}
+
+function buildCharts(rows) {
+  showChartLoading(true);
+  destroyCharts();
+  requestAnimationFrame(() => {
+    if (rows.length > 0) _buildCharts(rows);
+    showChartLoading(false);
+  });
+}
+
+function _buildCharts(rows) {
+  const priceEl = document.getElementById('price-panel');
+  const volEl   = document.getElementById('volume-panel');
+
+  const baseLayout = {
+    background: { color: '#090b0f' },
+    textColor:  '#4a5a72',
+    fontFamily: "'SF Mono','Fira Code',monospace",
+    fontSize:   10,
+  };
+  const baseGrid = {
+    vertLines: { color: '#0c0f14' },
+    horzLines: { color: '#0c0f14' },
+  };
+  const baseCross = {
+    mode: LightweightCharts.CrosshairMode.Normal,
+    vertLine: { color: '#3d8ef044', labelBackgroundColor: '#1a2540' },
+    horzLine: { color: '#3d8ef044', labelBackgroundColor: '#1a2540' },
+  };
+
+  // --- PRICE CHART ---
+  priceChart = LightweightCharts.createChart(priceEl, {
+    width:  priceEl.clientWidth,
+    height: priceEl.clientHeight,
+    layout: baseLayout, grid: baseGrid, crosshair: baseCross,
+    rightPriceScale: { borderColor: '#161a23' },
+    timeScale: { borderColor: '#161a23', timeVisible: true, secondsVisible: false },
+    handleScroll: true, handleScale: true,
+  });
+
+  candleSeries = priceChart.addCandlestickSeries({
+    upColor: VSA.Cyan, downColor: VSA.Cyan,
+    borderUpColor: VSA.Cyan, borderDownColor: VSA.Cyan,
+    wickUpColor: VSA.Cyan, wickDownColor: VSA.Cyan,
+  });
+
+  smaSeries = priceChart.addLineSeries({
+    color: '#f09a3d', lineWidth: 1,
+    priceLineVisible: false, lastValueVisible: false,
+  });
+
+  // --- VOLUME CHART ---
+  // Both series share priceScaleId 'right' with identical scaleMargins
+  // This is the fix for volume MA not aligning with histogram
+  volChart = LightweightCharts.createChart(volEl, {
+    width:  volEl.clientWidth,
+    height: volEl.clientHeight,
+    layout: baseLayout, grid: baseGrid,
+    crosshair: { ...baseCross, horzLine: { visible: false, labelVisible: false } },
+    rightPriceScale: { borderColor: '#161a23', scaleMargins: { top: 0.1, bottom: 0.0 } },
+    timeScale: { borderColor: '#161a23', timeVisible: true, secondsVisible: false },
+    handleScroll: true, handleScale: true,
+  });
+
+  volSeries = volChart.addHistogramSeries({
+    priceScaleId: 'right',
+    priceLineVisible: false, lastValueVisible: false,
+  });
+
+  volMaSeries = volChart.addLineSeries({
+    color: '#f09a3d', lineWidth: 1,
+    priceScaleId: 'right',              // same scale as histogram
+    priceLineVisible: false, lastValueVisible: false,
+  });
+
+  // --- BUILD DATA ARRAYS ---
+  const candles  = [], smaArr = [], volArr = [], volMaArr = [];
+
+  for (let i = 0; i < rows.length; i++) {
+    const r   = rows[i];
+    const col = vsaColor(r.vsa_color);
+
+    // Deduplicate timestamps — strictly ascending milliseconds
+    let t = parseTime(r.time);
+    if (t <= lastBarTime) t = lastBarTime + 1;
+    lastBarTime = t;
+
+    candles.push({
+      time: t,
+      open:  parseFloat(r.open),  high: parseFloat(r.high),
+      low:   parseFloat(r.low),   close: parseFloat(r.close),
+      color: col, borderColor: col, wickColor: col,
+    });
+
+    if (i >= SMA_PERIOD - 1) {
+      let sum = 0;
+      for (let j = i - SMA_PERIOD + 1; j <= i; j++) sum += parseFloat(rows[j].close);
+      smaArr.push({ time: t, value: sum / SMA_PERIOD });
+    }
+
+    const vol = parseFloat(r.volume);
+    volArr.push({ time: t, value: vol, color: vsaVolColor(rows[i].vsa_color) });
+
+    if (i >= VOL_MA_PERIOD - 1) {
+      let sum = 0;
+      for (let j = i - VOL_MA_PERIOD + 1; j <= i; j++) sum += parseFloat(rows[j].volume);
+      volMaArr.push({ time: t, value: sum / VOL_MA_PERIOD });
+    }
+  }
+
+  candleSeries.setData(candles);
+  smaSeries.setData(smaArr);
+  volSeries.setData(volArr);
+  volMaSeries.setData(volMaArr);
+
+  // Sync scroll between price and volume charts
+  let syncing = false;
+  priceChart.timeScale().subscribeVisibleLogicalRangeChange(range => {
+    if (syncing || !range) return;
+    syncing = true;
+    volChart.timeScale().setVisibleLogicalRange(range);
+    syncing = false;
+  });
+  volChart.timeScale().subscribeVisibleLogicalRangeChange(range => {
+    if (syncing || !range) return;
+    syncing = true;
+    priceChart.timeScale().setVisibleLogicalRange(range);
+    syncing = false;
+  });
+
+  priceChart.timeScale().scrollToRealTime();
+}
+
+// ============================================================
+// APPEND SINGLE BAR (realtime)
+// ============================================================
+function appendBar(row, i) {
+  if (!candleSeries) return;
+  const rows = instData[currentSize];
+  const col  = vsaColor(row.vsa_color);
+
+  let t = parseTime(row.time);
+  if (t <= lastBarTime) t = lastBarTime + 1;
+  lastBarTime = t;
+
+  candleSeries.update({
+    time: t, open: parseFloat(row.open), high: parseFloat(row.high),
+    low:  parseFloat(row.low), close: parseFloat(row.close),
+    color: col, borderColor: col, wickColor: col,
+  });
+
+  if (i >= SMA_PERIOD - 1) {
+    let sum = 0;
+    for (let j = i - SMA_PERIOD + 1; j <= i; j++) sum += parseFloat(rows[j].close);
+    smaSeries.update({ time: t, value: sum / SMA_PERIOD });
+  }
+
+  volSeries.update({ time: t, value: parseFloat(row.volume), color: vsaVolColor(row.vsa_color) });
+
+  if (i >= VOL_MA_PERIOD - 1) {
+    let sum = 0;
+    for (let j = i - VOL_MA_PERIOD + 1; j <= i; j++) sum += parseFloat(rows[j].volume);
+    volMaSeries.update({ time: t, value: sum / VOL_MA_PERIOD });
+  }
+
+  priceChart.timeScale().scrollToRealTime();
+  volChart.timeScale().scrollToRealTime();
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function showChartLoading(show) {
+  document.getElementById('chart-loading').classList.toggle('hidden', !show);
+}
+
+function showToast(msg, ms = 3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), ms);
+}
+
+window.addEventListener('resize', () => {
+  initPanelHeights();
+  resizeCharts();
+});
+
+// ============================================================
+// START
+// ============================================================
+init();
+</script>
+</body>
+</html>
