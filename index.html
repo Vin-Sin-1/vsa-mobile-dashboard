@@ -1188,13 +1188,16 @@
       // HELPERS
       // ============================================================
       function parseTime(str) {
-        // Parse the timestamp preserving the original timezone offset from Supabase
-        // Then convert to seconds. LightweightCharts receives UTC seconds but
-        // we tell it the local timezone offset so display matches Stockholm time.
-        const iso = str
-          .replace(" ", "T")
-          .replace(/([+-]\d{2})(\d{2})$/, "$1:$2");
-        return Math.floor(new Date(iso).getTime() / 1000);
+        // Normalize all Supabase timestamp formats to valid ISO 8601
+        // Handles: "2026-03-06 22:59:48.280 +0100"
+        //          "2026-03-06 22:59:48.280+00"
+        //          "2026-03-06T22:59:48.280Z"
+        let s = str.trim();
+        s = s.replace(/^(\d{4}-\d{2}-\d{2}) /, "$1T"); // space→T between date and time
+        s = s.replace(/(T[\d:.]+) ([+-])/, "$1$2"); // remove space before offset
+        s = s.replace(/([+-]\d{2})(\d{2})$/, "$1:$2"); // +0100 → +01:00
+        s = s.replace(/([+-]\d{2})$/, "$1:00"); // +01 → +01:00
+        return Math.floor(new Date(s).getTime() / 1000);
       }
 
       // Stockholm offset in seconds — CET=+3600, CEST=+7200
