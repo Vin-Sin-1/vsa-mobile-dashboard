@@ -1,901 +1,1245 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>VSA</title>
-<script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-  :root {
-    --bg:        #090b0f;
-    --bg2:       #0f1117;
-    --bg3:       #161a23;
-    --border:    #252d3d;
-    --border2:   #2e3a50;
-    --text:      #c8d4e8;
-    --text2:     #7a8fa8;
-    --accent:    #3d8ef0;
-    --sep:       #1e2738;
-    --header-h:  44px;
-    --tabs1-h:   40px;
-    --tabs2-h:   36px;
-    --left-w:    48px;
-  }
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>VSA</title>
+    <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+      :root {
+        --bg: #090b0f;
+        --bg2: #0f1117;
+        --bg3: #161a23;
+        --border: #252d3d;
+        --border2: #2e3a50;
+        --text: #c8d4e8;
+        --text2: #7a8fa8;
+        --accent: #3d8ef0;
+        --sep: #1e2738;
+        --header-h: 44px;
+        --tabs1-h: 40px;
+        --tabs2-h: 36px;
+        --left-w: 48px;
+      }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        -webkit-tap-highlight-color: transparent;
+      }
 
-  html, body {
-    height: 100%; width: 100%;
-    overflow: hidden;
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
-  }
+      html,
+      body {
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+      }
 
-  #app { display: flex; flex-direction: column; height: 100dvh; width: 100%; overflow: hidden; }
+      #app {
+        display: flex;
+        flex-direction: column;
+        height: 100dvh;
+        width: 100%;
+        overflow: hidden;
+      }
 
-  /* ============================================================
+      /* ============================================================
      PORTRAIT LAYOUT
   ============================================================ */
 
-  /* Header — portrait only */
-  .header {
-    height: var(--header-h); min-height: var(--header-h);
-    background: var(--bg2); border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; padding: 0 8px; gap: 6px;
-    flex-shrink: 0; z-index: 10;
-  }
-  .header-logo {
-    font-size: 10px; font-weight: 700; letter-spacing: 0.2em;
-    color: var(--text2); flex-shrink: 0; padding-right: 6px;
-    border-right: 1px solid var(--border);
-  }
-  .inst-tabs-portrait {
-    display: flex; align-items: center; flex: 1;
-    overflow-x: auto; gap: 3px;
-    -webkit-overflow-scrolling: touch;
-  }
-  .inst-tabs-portrait::-webkit-scrollbar { display: none; }
-  .status-dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--border2); flex-shrink: 0;
-    transition: background 0.3s, box-shadow 0.3s;
-  }
-  .status-dot.live { background: #3df07a; box-shadow: 0 0 7px #3df07a; }
+      /* Header — portrait only */
+      .header {
+        height: var(--header-h);
+        min-height: var(--header-h);
+        background: var(--bg2);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        gap: 6px;
+        flex-shrink: 0;
+        z-index: 10;
+      }
+      .header-logo {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        color: var(--text2);
+        flex-shrink: 0;
+        padding-right: 6px;
+        border-right: 1px solid var(--border);
+      }
+      .inst-tabs-portrait {
+        display: flex;
+        align-items: center;
+        flex: 1;
+        overflow-x: auto;
+        gap: 3px;
+        -webkit-overflow-scrolling: touch;
+      }
+      .inst-tabs-portrait::-webkit-scrollbar {
+        display: none;
+      }
+      .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--border2);
+        flex-shrink: 0;
+        transition:
+          background 0.3s,
+          box-shadow 0.3s;
+      }
+      .status-dot.live {
+        background: #3df07a;
+        box-shadow: 0 0 7px #3df07a;
+      }
 
-  /* Unified tab row — portrait */
-  .unified-tabs {
-    height: var(--tabs2-h); min-height: var(--tabs2-h);
-    background: var(--bg2); border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; overflow-x: auto; flex-shrink: 0;
-    padding: 0 8px; gap: 3px; -webkit-overflow-scrolling: touch;
-  }
-  .unified-tabs::-webkit-scrollbar { display: none; }
+      /* Unified tab row — portrait */
+      .unified-tabs {
+        height: var(--tabs2-h);
+        min-height: var(--tabs2-h);
+        background: var(--bg2);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        overflow-x: auto;
+        flex-shrink: 0;
+        padding: 0 8px;
+        gap: 3px;
+        -webkit-overflow-scrolling: touch;
+      }
+      .unified-tabs::-webkit-scrollbar {
+        display: none;
+      }
 
-  .tab-sep {
-    width: 1px; height: 16px; background: var(--border);
-    flex-shrink: 0; margin: 0 3px;
-  }
+      .tab-sep {
+        width: 1px;
+        height: 16px;
+        background: var(--border);
+        flex-shrink: 0;
+        margin: 0 3px;
+      }
 
-  /* ============================================================
+      /* ============================================================
      LANDSCAPE LAYOUT
   ============================================================ */
 
-  /* Landscape wrapper — flex row */
-  .landscape-wrap {
-    display: none;
-    flex: 1; flex-direction: row; overflow: hidden; min-height: 0;
-  }
+      /* Landscape wrapper — flex row */
+      .landscape-wrap {
+        display: none;
+        flex: 1;
+        flex-direction: row;
+        overflow: hidden;
+        min-height: 0;
+      }
 
-  /* Left panel */
-  .left-panel {
-    width: var(--left-w); min-width: var(--left-w);
-    background: var(--bg2);
-    border-right: 1px solid var(--border);
-    display: flex; flex-direction: column;
-    overflow: hidden; flex-shrink: 0;
-  }
-  .left-scroll {
-    flex: 1; overflow-y: auto; overflow-x: hidden;
-    display: flex; flex-direction: column;
-    align-items: center; padding: 6px 0; gap: 3px;
-    -webkit-overflow-scrolling: touch;
-  }
-  .left-scroll::-webkit-scrollbar { display: none; }
+      /* Left panel */
+      .left-panel {
+        width: var(--left-w);
+        min-width: var(--left-w);
+        background: var(--bg2);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+      .left-scroll {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 6px 0;
+        gap: 3px;
+        -webkit-overflow-scrolling: touch;
+      }
+      .left-scroll::-webkit-scrollbar {
+        display: none;
+      }
 
-  .left-sep {
-    width: 28px; height: 1px; background: var(--border);
-    flex-shrink: 0; margin: 4px 0;
-  }
+      .left-sep {
+        width: 28px;
+        height: 1px;
+        background: var(--border);
+        flex-shrink: 0;
+        margin: 4px 0;
+      }
 
-  .left-dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--border2); margin-bottom: 4px;
-    transition: background 0.3s, box-shadow 0.3s;
-  }
-  .left-dot.live { background: #3df07a; box-shadow: 0 0 6px #3df07a; }
+      .left-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--border2);
+        margin-bottom: 4px;
+        transition:
+          background 0.3s,
+          box-shadow 0.3s;
+      }
+      .left-dot.live {
+        background: #3df07a;
+        box-shadow: 0 0 6px #3df07a;
+      }
 
-  /* Vertical tab */
-  .vtab {
-    width: 36px; height: 28px;
-    border-radius: 4px; border: 1px solid transparent;
-    background: transparent; color: var(--text2);
-    font-family: inherit; font-size: 9px; font-weight: 700;
-    letter-spacing: 0.04em; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.12s; flex-shrink: 0;
-    white-space: nowrap;
-  }
-  .vtab:active { color: var(--text); }
-  .vtab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .vtab.time   { font-size: 8px; }
+      /* Vertical tab */
+      .vtab {
+        width: 36px;
+        height: 28px;
+        border-radius: 4px;
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--text2);
+        font-family: inherit;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.12s;
+        flex-shrink: 0;
+        white-space: nowrap;
+      }
+      .vtab:active {
+        color: var(--text);
+      }
+      .vtab.active {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
+      .vtab.time {
+        font-size: 8px;
+      }
 
-  /* ============================================================
+      /* ============================================================
      SHARED TAB STYLE
   ============================================================ */
-  .tab {
-    height: 24px; padding: 0 9px; border-radius: 4px;
-    border: 1px solid transparent; background: transparent;
-    color: var(--text2); font-family: inherit; font-size: 10px;
-    font-weight: 700; letter-spacing: 0.05em; cursor: pointer;
-    white-space: nowrap; flex-shrink: 0; transition: all 0.12s;
-  }
-  .tab:active { color: var(--text); }
-  .tab.active  { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .tab.time    { font-size: 9px; }
+      .tab {
+        height: 24px;
+        padding: 0 9px;
+        border-radius: 4px;
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--text2);
+        font-family: inherit;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        white-space: nowrap;
+        flex-shrink: 0;
+        transition: all 0.12s;
+      }
+      .tab:active {
+        color: var(--text);
+      }
+      .tab.active {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
+      .tab.time {
+        font-size: 9px;
+      }
 
-  /* ============================================================
+      /* ============================================================
      CHART AREA — shared portrait/landscape
   ============================================================ */
-  .chart-area {
-    flex: 1; display: flex; flex-direction: column;
-    overflow: hidden; min-height: 0; position: relative;
-    min-width: 0;
-  }
-  #price-panel  { flex-shrink: 0; min-height: 60px; overflow: hidden; }
-  #volume-panel { flex-shrink: 0; min-height: 40px; overflow: hidden; }
+      .chart-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        min-height: 0;
+        position: relative;
+        min-width: 0;
+      }
+      #price-panel {
+        flex-shrink: 0;
+        min-height: 60px;
+        overflow: hidden;
+      }
+      #volume-panel {
+        flex-shrink: 0;
+        min-height: 40px;
+        overflow: hidden;
+      }
 
-  .drag-handle {
-    height: 12px; min-height: 12px;
-    background: var(--bg2);
-    border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: center;
-    cursor: row-resize; flex-shrink: 0;
-    user-select: none; -webkit-user-select: none; touch-action: none;
-  }
-  .grip { width: 22px; height: 2px; background: var(--border2); border-radius: 1px; }
-  .drag-handle:active .grip { background: var(--accent); }
+      .drag-handle {
+        height: 12px;
+        min-height: 12px;
+        background: var(--bg2);
+        border-top: 1px solid var(--border);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: row-resize;
+        flex-shrink: 0;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: none;
+      }
+      .grip {
+        width: 22px;
+        height: 2px;
+        background: var(--border2);
+        border-radius: 1px;
+      }
+      .drag-handle:active .grip {
+        background: var(--accent);
+      }
 
-  /* ============================================================
+      /* ============================================================
      PORTRAIT CONTENT WRAPPER
   ============================================================ */
-  .portrait-content {
-    flex: 1; display: flex; flex-direction: column;
-    overflow: hidden; min-height: 0;
-  }
+      .portrait-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        min-height: 0;
+      }
 
-  /* ============================================================
+      /* ============================================================
      LOADING / EMPTY / TOAST
   ============================================================ */
-  .loading-overlay {
-    position: absolute; inset: 0; background: var(--bg);
-    display: flex; align-items: center; justify-content: center;
-    flex-direction: column; gap: 10px; z-index: 20;
-  }
-  .loading-overlay.hidden { display: none; }
-  .spinner {
-    width: 24px; height: 24px; border: 2px solid var(--border);
-    border-top-color: var(--accent); border-radius: 50%;
-    animation: spin 0.55s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-text { font-size: 10px; color: var(--text2); letter-spacing: 0.12em; }
+      .loading-overlay {
+        position: absolute;
+        inset: 0;
+        background: var(--bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 20;
+      }
+      .loading-overlay.hidden {
+        display: none;
+      }
+      .spinner {
+        width: 24px;
+        height: 24px;
+        border: 2px solid var(--border);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.55s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .loading-text {
+        font-size: 10px;
+        color: var(--text2);
+        letter-spacing: 0.12em;
+      }
 
-  .toast {
-    position: fixed; bottom: 20px; left: 50%;
-    transform: translateX(-50%) translateY(80px);
-    background: #3d1515; border: 1px solid #7a2020; color: #ff8080;
-    font-size: 10px; padding: 7px 14px; border-radius: 5px;
-    letter-spacing: 0.06em; transition: transform 0.25s; z-index: 100;
-    white-space: nowrap; pointer-events: none;
-  }
-  .toast.show { transform: translateX(-50%) translateY(0); }
+      .toast {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(80px);
+        background: #3d1515;
+        border: 1px solid #7a2020;
+        color: #ff8080;
+        font-size: 10px;
+        padding: 7px 14px;
+        border-radius: 5px;
+        letter-spacing: 0.06em;
+        transition: transform 0.25s;
+        z-index: 100;
+        white-space: nowrap;
+        pointer-events: none;
+      }
+      .toast.show {
+        transform: translateX(-50%) translateY(0);
+      }
 
-  /* ============================================================
+      /* ============================================================
      ORIENTATION MEDIA QUERIES
   ============================================================ */
-  @media (orientation: portrait) {
-    .header          { display: flex; }
-    .unified-tabs    { display: flex; }
-    .portrait-content{ display: flex; }
-    .landscape-wrap  { display: none; }
-  }
+      @media (orientation: portrait) {
+        .header {
+          display: flex;
+        }
+        .unified-tabs {
+          display: flex;
+        }
+        .portrait-content {
+          display: flex;
+        }
+        .landscape-wrap {
+          display: none;
+        }
+      }
 
-  @media (orientation: landscape) {
-    .header          { display: none; }
-    .unified-tabs    { display: none; }
-    .portrait-content{ display: none; }
-    .landscape-wrap  { display: flex; }
-  }
-</style>
-</head>
-<body>
-<div id="app">
+      @media (orientation: landscape) {
+        .header {
+          display: none;
+        }
+        .unified-tabs {
+          display: none;
+        }
+        .portrait-content {
+          display: none;
+        }
+        .landscape-wrap {
+          display: flex;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <!-- ===== PORTRAIT LAYOUT ===== -->
+      <div class="header">
+        <div class="header-logo">VSA</div>
+        <div class="inst-tabs-portrait" id="inst-tabs-portrait"></div>
+        <div class="status-dot" id="status-dot-portrait"></div>
+      </div>
 
-  <!-- ===== PORTRAIT LAYOUT ===== -->
-  <div class="header">
-    <div class="header-logo">VSA</div>
-    <div class="inst-tabs-portrait" id="inst-tabs-portrait"></div>
-    <div class="status-dot" id="status-dot-portrait"></div>
-  </div>
+      <div class="unified-tabs" id="unified-tabs"></div>
 
-  <div class="unified-tabs" id="unified-tabs"></div>
+      <div class="portrait-content">
+        <div class="chart-area" id="chart-area-portrait">
+          <div id="price-panel"></div>
+          <div class="drag-handle" id="drag-handle">
+            <div class="grip"></div>
+          </div>
+          <div id="volume-panel"></div>
+          <div class="loading-overlay" id="chart-loading">
+            <div class="spinner"></div>
+            <div class="loading-text">LOADING...</div>
+          </div>
+        </div>
+      </div>
 
-  <div class="portrait-content">
-    <div class="chart-area" id="chart-area-portrait">
-      <div id="price-panel"></div>
-      <div class="drag-handle" id="drag-handle"><div class="grip"></div></div>
-      <div id="volume-panel"></div>
-      <div class="loading-overlay" id="chart-loading">
-        <div class="spinner"></div>
-        <div class="loading-text">LOADING...</div>
+      <!-- ===== LANDSCAPE LAYOUT ===== -->
+      <div class="landscape-wrap" id="landscape-wrap">
+        <div class="left-panel">
+          <div class="left-scroll" id="left-scroll">
+            <div class="left-dot" id="status-dot-landscape"></div>
+            <!-- instrument vtabs, sep, size vtabs rendered here -->
+          </div>
+        </div>
+        <div class="chart-area" id="chart-area-landscape"></div>
       </div>
     </div>
-  </div>
+    <div class="toast" id="toast"></div>
 
-  <!-- ===== LANDSCAPE LAYOUT ===== -->
-  <div class="landscape-wrap" id="landscape-wrap">
-    <div class="left-panel">
-      <div class="left-scroll" id="left-scroll">
-        <div class="left-dot" id="status-dot-landscape"></div>
-        <!-- instrument vtabs, sep, size vtabs rendered here -->
-      </div>
-    </div>
-    <div class="chart-area" id="chart-area-landscape"></div>
-  </div>
+    <script>
+      // ============================================================
+      // CONFIG
+      // ============================================================
+      const SUPABASE_URL = "https://nyykpszexlxtapbnkxpw.supabase.co";
+      const SUPABASE_KEY = "sb_publishable_1Qv50ww1Krv0_8-Tgtdn-g_ahEOIOoP";
+      const SMA_PERIOD = 26;
+      const VOL_MA_PERIOD = 100;
+      const BARS_TO_LOAD = 500; // Renko + 5min + 15min
+      const BARS_TO_LOAD_1MIN = 1000; // 1min needs more bars
 
-</div>
-<div class="toast" id="toast"></div>
+      const INSTRUMENT_ORDER = [
+        "GC",
+        "CL",
+        "NQ",
+        "ES",
+        "RTY",
+        "ZB",
+        "EUR",
+        "GBP",
+        "JPY",
+        "AUD",
+      ];
 
-<script>
-// ============================================================
-// CONFIG
-// ============================================================
-const SUPABASE_URL  = 'https://nyykpszexlxtapbnkxpw.supabase.co';
-const SUPABASE_KEY  = 'sb_publishable_1Qv50ww1Krv0_8-Tgtdn-g_ahEOIOoP';
-const SMA_PERIOD    = 26;
-const VOL_MA_PERIOD = 100;
-const BARS_TO_LOAD  = 500;
+      // VSA colors
+      const VSA = {
+        Yellow: "#f0c93d",
+        Magenta: "#e040fb",
+        Red: "#f03d3d",
+        White: "#e8edf5",
+        Lime: "#3df07a",
+        Cyan: "#3dd4f0",
+      };
+      // Price candles — Yellow → Cyan (no demand not tracked on Renko)
+      function vsaColor(name) {
+        return name === "Yellow" ? VSA.Cyan : VSA[name] || VSA.Cyan;
+      }
+      // Volume histogram — Yellow kept
+      function vsaVolColor(name) {
+        return VSA[name] || VSA.Cyan;
+      }
 
-const INSTRUMENT_ORDER = ['GC', 'CL', 'NQ', 'ES', 'RTY', 'ZB', 'EUR', 'GBP', 'JPY', 'AUD'];
+      // ============================================================
+      // SUPABASE
+      // ============================================================
+      const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// VSA colors
-const VSA = {
-  Yellow:  '#f0c93d',
-  Magenta: '#e040fb',
-  Red:     '#f03d3d',
-  White:   '#e8edf5',
-  Lime:    '#3df07a',
-  Cyan:    '#3dd4f0',
-};
-// Price candles — Yellow → Cyan (no demand not tracked on Renko)
-function vsaColor(name)    { return name === 'Yellow' ? VSA.Cyan : (VSA[name] || VSA.Cyan); }
-// Volume histogram — Yellow kept
-function vsaVolColor(name) { return VSA[name] || VSA.Cyan; }
+      // ============================================================
+      // STATE
+      // ============================================================
+      let instruments = []; // sorted full names
+      let allSizes = {}; // { "GC APR26": [6,9,12] }
+      let allTimeframes = {}; // { "GC APR26": [1,5,15] }
+      let currentInst = null;
+      let currentSize = null; // number for renko, or "1m"/"5m"/"15m" for time
+      let currentType = null; // 'renko' or 'time'
+      let instData = {}; // { renko_6: [rows], renko_9: [rows], time_1: [rows], ... }
+      let realtimeSub = null;
 
-// ============================================================
-// SUPABASE
-// ============================================================
-const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      // Chart refs
+      let priceChart = null;
+      let volChart = null;
+      let candleSeries = null;
+      let smaSeries = null;
+      let volSeries = null;
+      let volMaSeries = null;
+      let lastBarTime = 0;
 
-// ============================================================
-// STATE
-// ============================================================
-let instruments  = [];   // sorted full names
-let allSizes     = {};   // { "GC APR26": [6,9,12] }
-let allTimeframes = {};  // { "GC APR26": [1,5,15] }
-let currentInst  = null;
-let currentSize  = null; // number for renko, or "1m"/"5m"/"15m" for time
-let currentType  = null; // 'renko' or 'time'
-let instData     = {};   // { renko_6: [rows], renko_9: [rows], time_1: [rows], ... }
-let realtimeSub  = null;
+      // Panel sizing
+      let pricePanelH = 0;
+      let volPanelH = 0;
+      let isLandscape = false;
 
-// Chart refs
-let priceChart   = null;
-let volChart     = null;
-let candleSeries = null;
-let smaSeries    = null;
-let volSeries    = null;
-let volMaSeries  = null;
-let lastBarTime  = 0;
+      // ============================================================
+      // INIT
+      // ============================================================
+      async function init() {
+        checkOrientation();
+        window.addEventListener("resize", onResize);
+        await loadMeta();
+      }
 
-// Panel sizing
-let pricePanelH  = 0;
-let volPanelH    = 0;
-let isLandscape  = false;
+      // ============================================================
+      // LOAD META
+      // ============================================================
+      async function loadMeta() {
+        try {
+          const [r1, r2, r3] = await Promise.all([
+            db.from("renko_instruments").select("instrument"),
+            db.from("renko_sizes").select("instrument, brick_size"),
+            db.from("time_bar_sizes").select("instrument, timeframe"),
+          ]);
 
-// ============================================================
-// INIT
-// ============================================================
-async function init() {
-  checkOrientation();
-  window.addEventListener('resize', onResize);
-  await loadMeta();
-}
+          if (r1.error) throw r1.error;
+          if (r2.error) throw r2.error;
+          if (r3.error) throw r3.error;
 
-// ============================================================
-// LOAD META
-// ============================================================
-async function loadMeta() {
-  try {
-    const [r1, r2, r3] = await Promise.all([
-      db.from('renko_instruments').select('instrument'),
-      db.from('renko_sizes').select('instrument, brick_size'),
-      db.from('time_bar_sizes').select('instrument, timeframe'),
-    ]);
+          // Build allSizes
+          allSizes = {};
+          for (const r of r2.data) {
+            if (!allSizes[r.instrument]) allSizes[r.instrument] = [];
+            allSizes[r.instrument].push(r.brick_size);
+          }
+          for (const k of Object.keys(allSizes))
+            allSizes[k].sort((a, b) => a - b);
 
-    if (r1.error) throw r1.error;
-    if (r2.error) throw r2.error;
-    if (r3.error) throw r3.error;
+          // Build allTimeframes
+          allTimeframes = {};
+          for (const r of r3.data) {
+            if (!allTimeframes[r.instrument]) allTimeframes[r.instrument] = [];
+            allTimeframes[r.instrument].push(r.timeframe);
+          }
+          for (const k of Object.keys(allTimeframes))
+            allTimeframes[k].sort((a, b) => a - b);
 
-    // Build allSizes
-    allSizes = {};
-    for (const r of r2.data) {
-      if (!allSizes[r.instrument]) allSizes[r.instrument] = [];
-      allSizes[r.instrument].push(r.brick_size);
-    }
-    for (const k of Object.keys(allSizes))
-      allSizes[k].sort((a, b) => a - b);
+          // Sort instruments
+          instruments = r1.data.map((r) => r.instrument);
+          instruments.sort((a, b) => {
+            const ra = a.split(" ")[0],
+              rb = b.split(" ")[0];
+            const ia = INSTRUMENT_ORDER.indexOf(ra),
+              ib = INSTRUMENT_ORDER.indexOf(rb);
+            if (ia === -1 && ib === -1) return a.localeCompare(b);
+            if (ia === -1) return 1;
+            if (ib === -1) return -1;
+            return ia - ib;
+          });
 
-    // Build allTimeframes
-    allTimeframes = {};
-    for (const r of r3.data) {
-      if (!allTimeframes[r.instrument]) allTimeframes[r.instrument] = [];
-      allTimeframes[r.instrument].push(r.timeframe);
-    }
-    for (const k of Object.keys(allTimeframes))
-      allTimeframes[k].sort((a, b) => a - b);
+          renderTabs();
 
-    // Sort instruments
-    instruments = r1.data.map(r => r.instrument);
-    instruments.sort((a, b) => {
-      const ra = a.split(' ')[0], rb = b.split(' ')[0];
-      const ia = INSTRUMENT_ORDER.indexOf(ra), ib = INSTRUMENT_ORDER.indexOf(rb);
-      if (ia === -1 && ib === -1) return a.localeCompare(b);
-      if (ia === -1) return 1; if (ib === -1) return -1;
-      return ia - ib;
-    });
+          if (instruments.length > 0) await selectInstrument(instruments[0]);
+        } catch (e) {
+          showToast("Failed to connect");
+          console.error(e);
+        }
+      }
 
-    renderTabs();
+      // ============================================================
+      // LOAD DATA FOR INSTRUMENT
+      // ============================================================
+      async function loadInstrumentData(inst) {
+        showChartLoading(true);
+        instData = {};
 
-    if (instruments.length > 0)
-      await selectInstrument(instruments[0]);
+        const sizes = allSizes[inst] || [];
+        const timeframes = allTimeframes[inst] || [];
 
-  } catch(e) {
-    showToast('Failed to connect');
-    console.error(e);
-  }
-}
+        try {
+          await Promise.all([
+            // Renko data
+            ...sizes.map(async (sz) => {
+              const { data, error } = await db
+                .from("renko_bricks")
+                .select("*")
+                .eq("instrument", inst)
+                .eq("brick_size", sz)
+                .order("time", { ascending: false })
+                .order("id", { ascending: false })
+                .limit(BARS_TO_LOAD);
+              if (error) throw error;
+              instData["renko_" + sz] = data.reverse();
+            }),
+            // Time data
+            ...timeframes.map(async (tf) => {
+              const limit = tf === 1 ? BARS_TO_LOAD_1MIN : BARS_TO_LOAD;
+              const { data, error } = await db
+                .from("time_bars")
+                .select("*")
+                .eq("instrument", inst)
+                .eq("timeframe", tf)
+                .order("time", { ascending: false })
+                .order("id", { ascending: false })
+                .limit(limit);
+              if (error) throw error;
+              instData["time_" + tf] = data.reverse();
+            }),
+          ]);
+        } catch (e) {
+          showToast("Failed to load data");
+          console.error(e);
+        }
 
-// ============================================================
-// LOAD DATA FOR INSTRUMENT
-// ============================================================
-async function loadInstrumentData(inst) {
-  showChartLoading(true);
-  instData = {};
+        showChartLoading(false);
+      }
 
-  const sizes      = allSizes[inst]      || [];
-  const timeframes = allTimeframes[inst] || [];
+      // ============================================================
+      // REALTIME
+      // ============================================================
+      function subscribeRealtime(inst) {
+        if (realtimeSub) {
+          db.removeChannel(realtimeSub);
+          realtimeSub = null;
+        }
 
-  try {
-    await Promise.all([
-      // Renko data
-      ...sizes.map(async sz => {
-        const { data, error } = await db
-          .from('renko_bricks')
-          .select('*')
-          .eq('instrument', inst)
-          .eq('brick_size', sz)
-          .order('time', { ascending: false })
-          .order('id',   { ascending: false })
-          .limit(BARS_TO_LOAD);
-        if (error) throw error;
-        instData['renko_' + sz] = data.reverse();
-      }),
-      // Time data
-      ...timeframes.map(async tf => {
-        const { data, error } = await db
-          .from('time_bars')
-          .select('*')
-          .eq('instrument', inst)
-          .eq('timeframe', tf)
-          .order('time', { ascending: false })
-          .order('id',   { ascending: false })
-          .limit(BARS_TO_LOAD);
-        if (error) throw error;
-        instData['time_' + tf] = data.reverse();
-      }),
-    ]);
-  } catch(e) {
-    showToast('Failed to load data');
-    console.error(e);
-  }
+        realtimeSub = db
+          .channel("vsa_rt_" + inst)
+          .on(
+            "postgres_changes",
+            {
+              event: "INSERT",
+              schema: "public",
+              table: "renko_bricks",
+              filter: "instrument=eq." + inst,
+            },
+            (p) => handleInsertRenko(p.new),
+          )
+          .on(
+            "postgres_changes",
+            {
+              event: "INSERT",
+              schema: "public",
+              table: "time_bars",
+              filter: "instrument=eq." + inst,
+            },
+            (p) => handleInsertTime(p.new),
+          )
+          .on(
+            "postgres_changes",
+            { event: "DELETE", schema: "public", table: "renko_bricks" },
+            () => handleDelete(),
+          )
+          .on(
+            "postgres_changes",
+            { event: "DELETE", schema: "public", table: "time_bars" },
+            () => handleDelete(),
+          )
+          .subscribe((status) => setLive(status === "SUBSCRIBED"));
+      }
 
-  showChartLoading(false);
-}
+      function handleInsertRenko(row) {
+        if (row.instrument !== currentInst) return;
+        const key = "renko_" + row.brick_size;
+        if (!instData[key]) instData[key] = [];
+        instData[key].push(row);
+        if (instData[key].length > BARS_TO_LOAD) instData[key].shift();
+        if (
+          currentType === "renko" &&
+          currentSize === row.brick_size &&
+          candleSeries
+        )
+          appendBar(row, instData[key].length - 1, false);
+      }
 
-// ============================================================
-// REALTIME
-// ============================================================
-function subscribeRealtime(inst) {
-  if (realtimeSub) { db.removeChannel(realtimeSub); realtimeSub = null; }
+      function handleInsertTime(row) {
+        if (row.instrument !== currentInst) return;
+        const key = "time_" + row.timeframe;
+        if (!instData[key]) instData[key] = [];
+        instData[key].push(row);
+        const cap = row.timeframe === 1 ? BARS_TO_LOAD_1MIN : BARS_TO_LOAD;
+        if (instData[key].length > cap) instData[key].shift();
+        if (
+          currentType === "time" &&
+          currentSize === row.timeframe &&
+          candleSeries
+        )
+          appendBar(row, instData[key].length - 1, true);
+      }
 
-  realtimeSub = db
-    .channel('vsa_rt_' + inst)
-    .on('postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'renko_bricks',
-        filter: 'instrument=eq.' + inst },
-      p => handleInsertRenko(p.new))
-    .on('postgres_changes',
-      { event: 'INSERT', schema: 'public', table: 'time_bars',
-        filter: 'instrument=eq.' + inst },
-      p => handleInsertTime(p.new))
-    .on('postgres_changes',
-      { event: 'DELETE', schema: 'public', table: 'renko_bricks' },
-      () => handleDelete())
-    .on('postgres_changes',
-      { event: 'DELETE', schema: 'public', table: 'time_bars' },
-      () => handleDelete())
-    .subscribe(status => setLive(status === 'SUBSCRIBED'));
-}
+      function handleDelete() {
+        setTimeout(async () => {
+          await loadInstrumentData(currentInst);
+          renderCurrentChart();
+        }, 3000);
+      }
 
-function handleInsertRenko(row) {
-  if (row.instrument !== currentInst) return;
-  const key = 'renko_' + row.brick_size;
-  if (!instData[key]) instData[key] = [];
-  instData[key].push(row);
-  if (instData[key].length > BARS_TO_LOAD) instData[key].shift();
-  if (currentType === 'renko' && currentSize === row.brick_size && candleSeries)
-    appendBar(row, instData[key].length - 1, false);
-}
+      // ============================================================
+      // SELECT INSTRUMENT
+      // ============================================================
+      async function selectInstrument(inst) {
+        currentInst = inst;
+        renderTabs();
+        await loadInstrumentData(inst);
+        subscribeRealtime(inst);
 
-function handleInsertTime(row) {
-  if (row.instrument !== currentInst) return;
-  const key = 'time_' + row.timeframe;
-  if (!instData[key]) instData[key] = [];
-  instData[key].push(row);
-  if (instData[key].length > BARS_TO_LOAD) instData[key].shift();
-  if (currentType === 'time' && currentSize === row.timeframe && candleSeries)
-    appendBar(row, instData[key].length - 1, true);
-}
+        // Auto-select first renko size
+        const sizes = allSizes[inst] || [];
+        if (sizes.length > 0) {
+          currentType = "renko";
+          currentSize = sizes[0];
+        } else {
+          const tfs = allTimeframes[inst] || [];
+          if (tfs.length > 0) {
+            currentType = "time";
+            currentSize = tfs[0];
+          }
+        }
 
-function handleDelete() {
-  setTimeout(async () => {
-    await loadInstrumentData(currentInst);
-    renderCurrentChart();
-  }, 3000);
-}
+        renderTabs();
+        initPanelHeights();
+        renderCurrentChart();
+      }
 
-// ============================================================
-// SELECT INSTRUMENT
-// ============================================================
-async function selectInstrument(inst) {
-  currentInst = inst;
-  renderTabs();
-  await loadInstrumentData(inst);
-  subscribeRealtime(inst);
+      // ============================================================
+      // SELECT CHART
+      // ============================================================
+      function selectRenko(sz) {
+        currentType = "renko";
+        currentSize = sz;
+        renderTabs();
+        renderCurrentChart();
+      }
 
-  // Auto-select first renko size
-  const sizes = allSizes[inst] || [];
-  if (sizes.length > 0) {
-    currentType = 'renko';
-    currentSize = sizes[0];
-  } else {
-    const tfs = allTimeframes[inst] || [];
-    if (tfs.length > 0) { currentType = 'time'; currentSize = tfs[0]; }
-  }
+      function selectTime(tf) {
+        currentType = "time";
+        currentSize = tf;
+        renderTabs();
+        renderCurrentChart();
+      }
 
-  renderTabs();
-  initPanelHeights();
-  renderCurrentChart();
-}
+      function renderCurrentChart() {
+        if (!currentType) return;
+        const key = currentType + "_" + currentSize;
+        const rows = instData[key] || [];
+        buildCharts(rows, currentType === "time");
+      }
 
-// ============================================================
-// SELECT CHART
-// ============================================================
-function selectRenko(sz) {
-  currentType = 'renko';
-  currentSize = sz;
-  renderTabs();
-  renderCurrentChart();
-}
+      // ============================================================
+      // RENDER TABS
+      // ============================================================
+      function renderTabs() {
+        renderPortraitTabs();
+        renderLandscapeTabs();
+      }
 
-function selectTime(tf) {
-  currentType = 'time';
-  currentSize = tf;
-  renderTabs();
-  renderCurrentChart();
-}
-
-function renderCurrentChart() {
-  if (!currentType) return;
-  const key  = currentType + '_' + currentSize;
-  const rows = instData[key] || [];
-  buildCharts(rows, currentType === 'time');
-}
-
-// ============================================================
-// RENDER TABS
-// ============================================================
-function renderTabs() {
-  renderPortraitTabs();
-  renderLandscapeTabs();
-}
-
-function instTabHtml(inst, cls) {
-  const root    = inst.split(' ')[0];
-  const active  = inst === currentInst ? 'active' : '';
-  return `<button class="${cls} ${active}" onclick="selectInstrument('${inst.replace(/'/g,"\\'")}')">
+      function instTabHtml(inst, cls) {
+        const root = inst.split(" ")[0];
+        const active = inst === currentInst ? "active" : "";
+        return `<button class="${cls} ${active}" onclick="selectInstrument('${inst.replace(/'/g, "\\'")}')">
     ${root}</button>`;
-}
+      }
 
-function sizeTabHtml(sz, cls) {
-  const active = (currentType === 'renko' && currentSize === sz) ? 'active' : '';
-  return `<button class="${cls} ${active}" onclick="selectRenko(${sz})">${sz}</button>`;
-}
+      function sizeTabHtml(sz, cls) {
+        const active =
+          currentType === "renko" && currentSize === sz ? "active" : "";
+        return `<button class="${cls} ${active}" onclick="selectRenko(${sz})">${sz}</button>`;
+      }
 
-function timeTabHtml(tf, cls, extra) {
-  const active = (currentType === 'time' && currentSize === tf) ? 'active' : '';
-  const label  = tf + 'm';
-  return `<button class="${cls} ${extra || ''} ${active}" onclick="selectTime(${tf})">${label}</button>`;
-}
+      function timeTabHtml(tf, cls, extra) {
+        const active =
+          currentType === "time" && currentSize === tf ? "active" : "";
+        const label = tf + "m";
+        return `<button class="${cls} ${extra || ""} ${active}" onclick="selectTime(${tf})">${label}</button>`;
+      }
 
-function renderPortraitTabs() {
-  // Instrument tabs
-  document.getElementById('inst-tabs-portrait').innerHTML =
-    instruments.map(i => instTabHtml(i, 'tab')).join('');
+      function renderPortraitTabs() {
+        // Instrument tabs
+        document.getElementById("inst-tabs-portrait").innerHTML = instruments
+          .map((i) => instTabHtml(i, "tab"))
+          .join("");
 
-  // Unified size + timeframe tabs
-  const sizes      = currentInst ? (allSizes[currentInst]      || []) : [];
-  const timeframes = currentInst ? (allTimeframes[currentInst] || []) : [];
-  let html = sizes.map(sz => sizeTabHtml(sz, 'tab')).join('');
-  if (sizes.length > 0 && timeframes.length > 0)
-    html += '<div class="tab-sep"></div>';
-  html += timeframes.map(tf => timeTabHtml(tf, 'tab', 'time')).join('');
-  document.getElementById('unified-tabs').innerHTML = html;
-}
+        // Unified size + timeframe tabs
+        const sizes = currentInst ? allSizes[currentInst] || [] : [];
+        const timeframes = currentInst ? allTimeframes[currentInst] || [] : [];
+        let html = sizes.map((sz) => sizeTabHtml(sz, "tab")).join("");
+        if (sizes.length > 0 && timeframes.length > 0)
+          html += '<div class="tab-sep"></div>';
+        html += timeframes.map((tf) => timeTabHtml(tf, "tab", "time")).join("");
+        document.getElementById("unified-tabs").innerHTML = html;
+      }
 
-function renderLandscapeTabs() {
-  const sizes      = currentInst ? (allSizes[currentInst]      || []) : [];
-  const timeframes = currentInst ? (allTimeframes[currentInst] || []) : [];
+      function renderLandscapeTabs() {
+        const sizes = currentInst ? allSizes[currentInst] || [] : [];
+        const timeframes = currentInst ? allTimeframes[currentInst] || [] : [];
 
-  let html = instruments.map(i => {
-    const root   = i.split(' ')[0];
-    const active = i === currentInst ? 'active' : '';
-    return `<button class="vtab ${active}" onclick="selectInstrument('${i.replace(/'/g,"\\'")}')">
+        let html = instruments
+          .map((i) => {
+            const root = i.split(" ")[0];
+            const active = i === currentInst ? "active" : "";
+            return `<button class="vtab ${active}" onclick="selectInstrument('${i.replace(/'/g, "\\'")}')">
       ${root}</button>`;
-  }).join('');
+          })
+          .join("");
 
-  if (sizes.length > 0 || timeframes.length > 0)
-    html += '<div class="left-sep"></div>';
+        if (sizes.length > 0 || timeframes.length > 0)
+          html += '<div class="left-sep"></div>';
 
-  html += sizes.map(sz => {
-    const active = (currentType === 'renko' && currentSize === sz) ? 'active' : '';
-    return `<button class="vtab ${active}" onclick="selectRenko(${sz})">${sz}</button>`;
-  }).join('');
+        html += sizes
+          .map((sz) => {
+            const active =
+              currentType === "renko" && currentSize === sz ? "active" : "";
+            return `<button class="vtab ${active}" onclick="selectRenko(${sz})">${sz}</button>`;
+          })
+          .join("");
 
-  if (sizes.length > 0 && timeframes.length > 0)
-    html += '<div class="left-sep"></div>';
+        if (sizes.length > 0 && timeframes.length > 0)
+          html += '<div class="left-sep"></div>';
 
-  html += timeframes.map(tf => {
-    const active = (currentType === 'time' && currentSize === tf) ? 'active' : '';
-    return `<button class="vtab time ${active}" onclick="selectTime(${tf})">${tf}m</button>`;
-  }).join('');
+        html += timeframes
+          .map((tf) => {
+            const active =
+              currentType === "time" && currentSize === tf ? "active" : "";
+            return `<button class="vtab time ${active}" onclick="selectTime(${tf})">${tf}m</button>`;
+          })
+          .join("");
 
-  document.getElementById('left-scroll').innerHTML =
-    `<div class="left-dot ${document.getElementById('status-dot-portrait').classList.contains('live') ? 'live' : ''}" id="status-dot-landscape"></div>` + html;
-}
+        document.getElementById("left-scroll").innerHTML =
+          `<div class="left-dot ${document.getElementById("status-dot-portrait").classList.contains("live") ? "live" : ""}" id="status-dot-landscape"></div>` +
+          html;
+      }
 
-// ============================================================
-// ORIENTATION
-// ============================================================
-function checkOrientation() {
-  isLandscape = window.innerWidth > window.innerHeight;
-}
+      // ============================================================
+      // ORIENTATION
+      // ============================================================
+      function checkOrientation() {
+        isLandscape = window.innerWidth > window.innerHeight;
+      }
 
-function onResize() {
-  const wasLandscape = isLandscape;
-  checkOrientation();
-  initPanelHeights();
+      function onResize() {
+        const wasLandscape = isLandscape;
+        checkOrientation();
+        initPanelHeights();
 
-  // Sync chart panels to correct parent after orientation change
-  if (wasLandscape !== isLandscape) {
-    const priceEl = document.getElementById('price-panel');
-    const volEl   = document.getElementById('volume-panel');
-    const handle  = document.getElementById('drag-handle');
-    const target  = isLandscape
-      ? document.getElementById('chart-area-landscape')
-      : document.getElementById('chart-area-portrait');
+        // Sync chart panels to correct parent after orientation change
+        if (wasLandscape !== isLandscape) {
+          const priceEl = document.getElementById("price-panel");
+          const volEl = document.getElementById("volume-panel");
+          const handle = document.getElementById("drag-handle");
+          const target = isLandscape
+            ? document.getElementById("chart-area-landscape")
+            : document.getElementById("chart-area-portrait");
 
-    target.appendChild(priceEl);
-    target.appendChild(handle);
-    target.appendChild(volEl);
-    target.appendChild(document.getElementById('chart-loading'));
+          target.appendChild(priceEl);
+          target.appendChild(handle);
+          target.appendChild(volEl);
+          target.appendChild(document.getElementById("chart-loading"));
 
-    renderCurrentChart();
-    return;
-  }
+          renderCurrentChart();
+          return;
+        }
 
-  resizeCharts();
-}
+        resizeCharts();
+      }
 
-// ============================================================
-// PANEL HEIGHT
-// ============================================================
-function initPanelHeights() {
-  checkOrientation();
-  let totalH;
+      // ============================================================
+      // PANEL HEIGHT
+      // ============================================================
+      function initPanelHeights() {
+        checkOrientation();
+        let totalH;
 
-  if (isLandscape) {
-    totalH = window.innerHeight - 12;
-  } else {
-    const headerH = 44 + 36; // header + unified tabs
-    totalH = window.innerHeight - headerH - 12;
-  }
+        if (isLandscape) {
+          totalH = window.innerHeight - 12;
+        } else {
+          const headerH = 44 + 36; // header + unified tabs
+          totalH = window.innerHeight - headerH - 12;
+        }
 
-  pricePanelH = Math.floor(totalH * 0.70);
-  volPanelH   = totalH - pricePanelH;
-  applyPanelHeights();
-}
+        pricePanelH = Math.floor(totalH * 0.7);
+        volPanelH = totalH - pricePanelH;
+        applyPanelHeights();
+      }
 
-function applyPanelHeights() {
-  document.getElementById('price-panel').style.height  = pricePanelH + 'px';
-  document.getElementById('volume-panel').style.height = volPanelH   + 'px';
-}
+      function applyPanelHeights() {
+        document.getElementById("price-panel").style.height =
+          pricePanelH + "px";
+        document.getElementById("volume-panel").style.height = volPanelH + "px";
+      }
 
-function resizeCharts() {
-  if (!priceChart || !volChart) return;
-  priceChart.resize(document.getElementById('price-panel').clientWidth,  pricePanelH);
-  volChart.resize(  document.getElementById('volume-panel').clientWidth, volPanelH);
-}
+      function resizeCharts() {
+        if (!priceChart || !volChart) return;
+        priceChart.resize(
+          document.getElementById("price-panel").clientWidth,
+          pricePanelH,
+        );
+        volChart.resize(
+          document.getElementById("volume-panel").clientWidth,
+          volPanelH,
+        );
+      }
 
-// ============================================================
-// DRAG HANDLE
-// ============================================================
-(function() {
-  const handle = document.getElementById('drag-handle');
-  let dragging = false, startY = 0, startPH = 0, startVH = 0;
-  function start(e) {
-    dragging = true;
-    startY = e.touches ? e.touches[0].clientY : e.clientY;
-    startPH = pricePanelH; startVH = volPanelH;
-    e.preventDefault();
-  }
-  function move(e) {
-    if (!dragging) return;
-    const y   = e.touches ? e.touches[0].clientY : e.clientY;
-    const min = 40, max = startPH + startVH - min;
-    pricePanelH = Math.max(min, Math.min(max, startPH + (y - startY)));
-    volPanelH   = (startPH + startVH) - pricePanelH;
-    applyPanelHeights();
-    resizeCharts();
-    e.preventDefault();
-  }
-  function end() { dragging = false; }
-  handle.addEventListener('mousedown',  start, { passive: false });
-  handle.addEventListener('touchstart', start, { passive: false });
-  window.addEventListener('mousemove',  move,  { passive: false });
-  window.addEventListener('touchmove',  move,  { passive: false });
-  window.addEventListener('mouseup',    end);
-  window.addEventListener('touchend',   end);
-})();
+      // ============================================================
+      // DRAG HANDLE
+      // ============================================================
+      (function () {
+        const handle = document.getElementById("drag-handle");
+        let dragging = false,
+          startY = 0,
+          startPH = 0,
+          startVH = 0;
+        function start(e) {
+          dragging = true;
+          startY = e.touches ? e.touches[0].clientY : e.clientY;
+          startPH = pricePanelH;
+          startVH = volPanelH;
+          e.preventDefault();
+        }
+        function move(e) {
+          if (!dragging) return;
+          const y = e.touches ? e.touches[0].clientY : e.clientY;
+          const min = 40,
+            max = startPH + startVH - min;
+          pricePanelH = Math.max(min, Math.min(max, startPH + (y - startY)));
+          volPanelH = startPH + startVH - pricePanelH;
+          applyPanelHeights();
+          resizeCharts();
+          e.preventDefault();
+        }
+        function end() {
+          dragging = false;
+        }
+        handle.addEventListener("mousedown", start, { passive: false });
+        handle.addEventListener("touchstart", start, { passive: false });
+        window.addEventListener("mousemove", move, { passive: false });
+        window.addEventListener("touchmove", move, { passive: false });
+        window.addEventListener("mouseup", end);
+        window.addEventListener("touchend", end);
+      })();
 
-// ============================================================
-// BUILD CHARTS
-// ============================================================
-function destroyCharts() {
-  if (priceChart) { priceChart.remove(); priceChart = null; }
-  if (volChart)   { volChart.remove();   volChart   = null; }
-  candleSeries = smaSeries = volSeries = volMaSeries = null;
-  lastBarTime  = 0;
-}
+      // ============================================================
+      // BUILD CHARTS
+      // ============================================================
+      function destroyCharts() {
+        if (priceChart) {
+          priceChart.remove();
+          priceChart = null;
+        }
+        if (volChart) {
+          volChart.remove();
+          volChart = null;
+        }
+        candleSeries = smaSeries = volSeries = volMaSeries = null;
+        lastBarTime = 0;
+      }
 
-function buildCharts(rows, isTimechart) {
-  showChartLoading(true);
-  destroyCharts();
-  requestAnimationFrame(() => {
-    if (rows.length > 0) _buildCharts(rows, isTimechart);
-    showChartLoading(false);
-  });
-}
+      function buildCharts(rows, isTimechart) {
+        showChartLoading(true);
+        destroyCharts();
+        requestAnimationFrame(() => {
+          if (rows.length > 0) _buildCharts(rows, isTimechart);
+          showChartLoading(false);
+        });
+      }
 
-function _buildCharts(rows, isTimechart) {
-  const priceEl = document.getElementById('price-panel');
-  const volEl   = document.getElementById('volume-panel');
+      function _buildCharts(rows, isTimechart) {
+        const priceEl = document.getElementById("price-panel");
+        const volEl = document.getElementById("volume-panel");
 
-  const baseLayout = {
-    background: { color: '#090b0f' }, textColor: '#4a5a72',
-    fontFamily: "'SF Mono','Fira Code',monospace", fontSize: 10,
-  };
-  const baseGrid = {
-    vertLines: { color: '#0c0f14' }, horzLines: { color: '#0c0f14' },
-  };
-  const baseCross = {
-    mode: LightweightCharts.CrosshairMode.Normal,
-    vertLine: { color: '#3d8ef044', labelBackgroundColor: '#1a2540' },
-    horzLine: { color: '#3d8ef044', labelBackgroundColor: '#1a2540' },
-  };
+        const baseLayout = {
+          background: { color: "#090b0f" },
+          textColor: "#8ba0b8",
+          fontFamily: "'SF Mono','Fira Code',monospace",
+          fontSize: 10,
+        };
+        const baseGrid = {
+          vertLines: { color: "#0c0f14" },
+          horzLines: { color: "#0c0f14" },
+        };
+        const baseCross = {
+          mode: LightweightCharts.CrosshairMode.Normal,
+          vertLine: { color: "#3d8ef044", labelBackgroundColor: "#1a2540" },
+          horzLine: { color: "#3d8ef044", labelBackgroundColor: "#1a2540" },
+        };
 
-  priceChart = LightweightCharts.createChart(priceEl, {
-    width: priceEl.clientWidth, height: priceEl.clientHeight,
-    layout: baseLayout, grid: baseGrid, crosshair: baseCross,
-    rightPriceScale: { borderColor: '#161a23' },
-    timeScale: { borderColor: '#161a23', timeVisible: true, secondsVisible: false },
-    handleScroll: true, handleScale: true,
-  });
+        priceChart = LightweightCharts.createChart(priceEl, {
+          width: priceEl.clientWidth,
+          height: priceEl.clientHeight,
+          layout: baseLayout,
+          grid: baseGrid,
+          crosshair: baseCross,
+          rightPriceScale: { borderColor: "#161a23" },
+          timeScale: {
+            borderColor: "#161a23",
+            timeVisible: true,
+            secondsVisible: false,
+            localization: { locale: "sv-SE" },
+            offset: LOCAL_OFFSET_SECONDS / 60,
+          },
+          handleScroll: true,
+          handleScale: true,
+        });
 
-  candleSeries = priceChart.addCandlestickSeries({
-    upColor: VSA.Cyan, downColor: VSA.Cyan,
-    borderUpColor: VSA.Cyan, borderDownColor: VSA.Cyan,
-    wickUpColor: VSA.Cyan, wickDownColor: VSA.Cyan,
-  });
+        candleSeries = priceChart.addCandlestickSeries({
+          // No default colors — per-bar color/borderColor/wickColor take full control
+          priceLineVisible: false,
+        });
 
-  smaSeries = priceChart.addLineSeries({
-    color: '#f09a3d', lineWidth: 1,
-    priceLineVisible: false, lastValueVisible: false,
-  });
+        smaSeries = priceChart.addLineSeries({
+          color: "#f09a3d",
+          lineWidth: 1,
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
 
-  volChart = LightweightCharts.createChart(volEl, {
-    width: volEl.clientWidth, height: volEl.clientHeight,
-    layout: baseLayout, grid: baseGrid,
-    crosshair: { ...baseCross, horzLine: { visible: false, labelVisible: false } },
-    rightPriceScale: { borderColor: '#161a23', scaleMargins: { top: 0.1, bottom: 0.0 } },
-    timeScale: { borderColor: '#161a23', timeVisible: true, secondsVisible: false },
-    handleScroll: true, handleScale: true,
-  });
+        volChart = LightweightCharts.createChart(volEl, {
+          width: volEl.clientWidth,
+          height: volEl.clientHeight,
+          layout: baseLayout,
+          grid: baseGrid,
+          crosshair: {
+            ...baseCross,
+            horzLine: { visible: false, labelVisible: false },
+          },
+          rightPriceScale: {
+            borderColor: "#161a23",
+            scaleMargins: { top: 0.1, bottom: 0.0 },
+          },
+          timeScale: {
+            borderColor: "#161a23",
+            timeVisible: true,
+            secondsVisible: false,
+            localization: { locale: "sv-SE" },
+            offset: LOCAL_OFFSET_SECONDS / 60,
+          },
+          handleScroll: true,
+          handleScale: true,
+        });
 
-  volSeries = volChart.addHistogramSeries({
-    priceScaleId: 'right', priceLineVisible: false, lastValueVisible: false,
-  });
+        volSeries = volChart.addHistogramSeries({
+          priceScaleId: "right",
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
 
-  volMaSeries = volChart.addLineSeries({
-    color: '#f09a3d', lineWidth: 1, priceScaleId: 'right',
-    priceLineVisible: false, lastValueVisible: false,
-  });
+        volMaSeries = volChart.addLineSeries({
+          color: "#f09a3d",
+          lineWidth: 1,
+          priceScaleId: "right",
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
 
-  const candles = [], smaArr = [], volArr = [], volMaArr = [];
+        const candles = [],
+          smaArr = [],
+          volArr = [],
+          volMaArr = [];
 
-  for (let i = 0; i < rows.length; i++) {
-    const r   = rows[i];
-    const col = vsaColor(r.vsa_color);
-    const vc  = vsaVolColor(r.vsa_color);
+        for (let i = 0; i < rows.length; i++) {
+          const r = rows[i];
+          const col = isTimechart
+            ? vsaVolColor(r.vsa_color)
+            : vsaColor(r.vsa_color);
+          const vc = vsaVolColor(r.vsa_color);
 
-    let t = parseTime(r.time);
-    if (t <= lastBarTime) t = lastBarTime + 1;
-    lastBarTime = t;
+          let t = parseTime(r.time);
+          if (t <= lastBarTime) t = lastBarTime + 1;
+          lastBarTime = t;
 
-    candles.push({
-      time: t, open: parseFloat(r.open), high: parseFloat(r.high),
-      low: parseFloat(r.low), close: parseFloat(r.close),
-      color: col, borderColor: col, wickColor: col,
-    });
+          candles.push({
+            time: t,
+            open: parseFloat(r.open),
+            high: parseFloat(r.high),
+            low: parseFloat(r.low),
+            close: parseFloat(r.close),
+            color: col,
+            borderColor: col,
+            wickColor: col,
+          });
 
-    if (i >= SMA_PERIOD - 1) {
-      let sum = 0;
-      for (let j = i - SMA_PERIOD + 1; j <= i; j++) sum += parseFloat(rows[j].close);
-      smaArr.push({ time: t, value: sum / SMA_PERIOD });
-    }
+          if (i >= SMA_PERIOD - 1) {
+            let sum = 0;
+            for (let j = i - SMA_PERIOD + 1; j <= i; j++)
+              sum += parseFloat(rows[j].close);
+            smaArr.push({ time: t, value: sum / SMA_PERIOD });
+          }
 
-    volArr.push({ time: t, value: parseFloat(r.volume), color: vc });
+          volArr.push({ time: t, value: parseFloat(r.volume), color: vc });
 
-    if (i >= VOL_MA_PERIOD - 1) {
-      let sum = 0;
-      for (let j = i - VOL_MA_PERIOD + 1; j <= i; j++) sum += parseFloat(rows[j].volume);
-      volMaArr.push({ time: t, value: sum / VOL_MA_PERIOD });
-    }
-  }
+          if (i >= VOL_MA_PERIOD - 1) {
+            let sum = 0;
+            for (let j = i - VOL_MA_PERIOD + 1; j <= i; j++)
+              sum += parseFloat(rows[j].volume);
+            volMaArr.push({ time: t, value: sum / VOL_MA_PERIOD });
+          }
+        }
 
-  candleSeries.setData(candles);
-  smaSeries.setData(smaArr);
-  volSeries.setData(volArr);
-  volMaSeries.setData(volMaArr);
+        candleSeries.setData(candles);
+        smaSeries.setData(smaArr);
+        volSeries.setData(volArr);
+        volMaSeries.setData(volMaArr);
 
-  // Sync scroll
-  let syncing = false;
-  priceChart.timeScale().subscribeVisibleLogicalRangeChange(range => {
-    if (syncing || !range) return;
-    syncing = true; volChart.timeScale().setVisibleLogicalRange(range); syncing = false;
-  });
-  volChart.timeScale().subscribeVisibleLogicalRangeChange(range => {
-    if (syncing || !range) return;
-    syncing = true; priceChart.timeScale().setVisibleLogicalRange(range); syncing = false;
-  });
+        // Sync crosshair between price and volume charts
+        priceChart.subscribeCrosshairMove((param) => {
+          if (param.time)
+            volChart.setCrosshairPosition(0, param.time, volSeries);
+          else volChart.clearCrosshairPosition();
+        });
 
-  priceChart.timeScale().scrollToRealTime();
-}
+        // Sync scroll
+        let syncing = false;
+        priceChart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+          if (syncing || !range) return;
+          syncing = true;
+          volChart.timeScale().setVisibleLogicalRange(range);
+          syncing = false;
+        });
+        volChart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+          if (syncing || !range) return;
+          syncing = true;
+          priceChart.timeScale().setVisibleLogicalRange(range);
+          syncing = false;
+        });
 
-// ============================================================
-// APPEND BAR (realtime)
-// ============================================================
-function appendBar(row, i, isTimechart) {
-  if (!candleSeries) return;
-  const key  = currentType + '_' + currentSize;
-  const rows = instData[key];
-  const col  = vsaColor(row.vsa_color);
-  const vc   = vsaVolColor(row.vsa_color);
+        priceChart.timeScale().scrollToRealTime();
+      }
 
-  let t = parseTime(row.time);
-  if (t <= lastBarTime) t = lastBarTime + 1;
-  lastBarTime = t;
+      // ============================================================
+      // APPEND BAR (realtime)
+      // ============================================================
+      function appendBar(row, i, isTimechart) {
+        if (!candleSeries) return;
+        const key = currentType + "_" + currentSize;
+        const rows = instData[key];
+        const col = isTimechart
+          ? vsaVolColor(row.vsa_color)
+          : vsaColor(row.vsa_color);
+        const vc = vsaVolColor(row.vsa_color);
 
-  candleSeries.update({
-    time: t, open: parseFloat(row.open), high: parseFloat(row.high),
-    low: parseFloat(row.low), close: parseFloat(row.close),
-    color: col, borderColor: col, wickColor: col,
-  });
+        let t = parseTime(row.time);
+        if (t <= lastBarTime) t = lastBarTime + 1;
+        lastBarTime = t;
 
-  if (i >= SMA_PERIOD - 1) {
-    let sum = 0;
-    for (let j = i - SMA_PERIOD + 1; j <= i; j++) sum += parseFloat(rows[j].close);
-    smaSeries.update({ time: t, value: sum / SMA_PERIOD });
-  }
+        candleSeries.update({
+          time: t,
+          open: parseFloat(row.open),
+          high: parseFloat(row.high),
+          low: parseFloat(row.low),
+          close: parseFloat(row.close),
+          color: col,
+          borderColor: col,
+          wickColor: col,
+        });
 
-  volSeries.update({ time: t, value: parseFloat(row.volume), color: vc });
+        if (i >= SMA_PERIOD - 1) {
+          let sum = 0;
+          for (let j = i - SMA_PERIOD + 1; j <= i; j++)
+            sum += parseFloat(rows[j].close);
+          smaSeries.update({ time: t, value: sum / SMA_PERIOD });
+        }
 
-  if (i >= VOL_MA_PERIOD - 1) {
-    let sum = 0;
-    for (let j = i - VOL_MA_PERIOD + 1; j <= i; j++) sum += parseFloat(rows[j].volume);
-    volMaSeries.update({ time: t, value: sum / VOL_MA_PERIOD });
-  }
+        volSeries.update({ time: t, value: parseFloat(row.volume), color: vc });
 
-  priceChart.timeScale().scrollToRealTime();
-  volChart.timeScale().scrollToRealTime();
-}
+        if (i >= VOL_MA_PERIOD - 1) {
+          let sum = 0;
+          for (let j = i - VOL_MA_PERIOD + 1; j <= i; j++)
+            sum += parseFloat(rows[j].volume);
+          volMaSeries.update({ time: t, value: sum / VOL_MA_PERIOD });
+        }
 
-// ============================================================
-// HELPERS
-// ============================================================
-function parseTime(str) {
-  const iso = str.replace(' ', 'T').replace(/([+-]\d{2})(\d{2})$/, '$1:$2');
-  return Math.floor(new Date(iso).getTime() / 1000);
-}
+        priceChart.timeScale().scrollToRealTime();
+        volChart.timeScale().scrollToRealTime();
+      }
 
-function setLive(live) {
-  document.getElementById('status-dot-portrait').classList.toggle('live', live);
-  const ld = document.getElementById('status-dot-landscape');
-  if (ld) ld.classList.toggle('live', live);
-}
+      // ============================================================
+      // HELPERS
+      // ============================================================
+      function parseTime(str) {
+        // Parse the timestamp preserving the original timezone offset from Supabase
+        // Then convert to seconds. LightweightCharts receives UTC seconds but
+        // we tell it the local timezone offset so display matches Stockholm time.
+        const iso = str
+          .replace(" ", "T")
+          .replace(/([+-]\d{2})(\d{2})$/, "$1:$2");
+        return Math.floor(new Date(iso).getTime() / 1000);
+      }
 
-function showChartLoading(show) {
-  document.getElementById('chart-loading').classList.toggle('hidden', !show);
-}
+      // Stockholm offset in seconds — CET=+3600, CEST=+7200
+      // Detected at runtime from the browser locale (phone is in Stockholm)
+      const LOCAL_OFFSET_SECONDS = -new Date().getTimezoneOffset() * 60;
 
-function showToast(msg, ms = 3000) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), ms);
-}
+      function setLive(live) {
+        document
+          .getElementById("status-dot-portrait")
+          .classList.toggle("live", live);
+        const ld = document.getElementById("status-dot-landscape");
+        if (ld) ld.classList.toggle("live", live);
+      }
 
-// Move chart panels into correct container on load
-function initPanelContainers() {
-  const target = isLandscape
-    ? document.getElementById('chart-area-landscape')
-    : document.getElementById('chart-area-portrait');
+      function showChartLoading(show) {
+        document
+          .getElementById("chart-loading")
+          .classList.toggle("hidden", !show);
+      }
 
-  target.appendChild(document.getElementById('price-panel'));
-  target.appendChild(document.getElementById('drag-handle'));
-  target.appendChild(document.getElementById('volume-panel'));
-  target.appendChild(document.getElementById('chart-loading'));
-}
+      function showToast(msg, ms = 3000) {
+        const t = document.getElementById("toast");
+        t.textContent = msg;
+        t.classList.add("show");
+        setTimeout(() => t.classList.remove("show"), ms);
+      }
 
-// ============================================================
-// START
-// ============================================================
-checkOrientation();
-initPanelContainers();
-init();
-</script>
-</body>
+      // Move chart panels into correct container on load
+      function initPanelContainers() {
+        const target = isLandscape
+          ? document.getElementById("chart-area-landscape")
+          : document.getElementById("chart-area-portrait");
+
+        target.appendChild(document.getElementById("price-panel"));
+        target.appendChild(document.getElementById("drag-handle"));
+        target.appendChild(document.getElementById("volume-panel"));
+        target.appendChild(document.getElementById("chart-loading"));
+      }
+
+      // ============================================================
+      // START
+      // ============================================================
+      checkOrientation();
+      initPanelContainers();
+      init();
+    </script>
+  </body>
 </html>
