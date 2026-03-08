@@ -7,6 +7,7 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
     <title>VSA</title>
+    <link rel="manifest" href="/manifest.json" />
     <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -1197,7 +1198,7 @@
         s = s.replace(/(T[\d:.]+) ([+-])/, "$1$2"); // remove space before offset
         s = s.replace(/([+-]\d{2})(\d{2})$/, "$1:$2"); // +0100 → +01:00
         s = s.replace(/([+-]\d{2})$/, "$1:00"); // +01 → +01:00
-        return Math.floor(new Date(s).getTime() / 1000);
+        return Math.floor(new Date(s).getTime() / 1000) + LOCAL_OFFSET_SECONDS;
       }
 
       // Stockholm offset in seconds — CET=+3600, CEST=+7200
