@@ -652,11 +652,13 @@
           }
           if (newRows && newRows.length > 0) {
             setLive(true);
-            for (const r of newRows) {
-              rows.push(r);
-              appendBar(r);
-            }
+            for (const r of newRows) rows.push(r);
             lastBarIndex = rows[rows.length - 1].bar_index;
+            if (newRows.length === 1) {
+              appendBar(newRows[0]); // single bar — fast update
+            } else {
+              rebuildSeriesData(); // multiple bars — rebuild all series to avoid dropped bars
+            }
           }
         } catch (e) {
           setLive(false);
@@ -700,8 +702,18 @@
         };
         const cross = {
           mode: LightweightCharts.CrosshairMode.Normal,
-          vertLine: { color: "#3d8ef044", labelBackgroundColor: "#1a2540" },
-          horzLine: { color: "#3d8ef044", labelBackgroundColor: "#1a2540" },
+          vertLine: {
+            color: "#a0c4ffcc",
+            width: 1,
+            style: 0,
+            labelBackgroundColor: "#1a2540",
+          },
+          horzLine: {
+            color: "#a0c4ffcc",
+            width: 1,
+            style: 0,
+            labelBackgroundColor: "#1a2540",
+          },
         };
 
         priceChart = LightweightCharts.createChart(priceEl, {
@@ -777,10 +789,9 @@
           const r = rows[i];
           const col = vsaCandleColor(r.vsa_color, isTimechart);
           const vc = vsaVolColor(r.vsa_color);
-          // Renko uses fixed_time (unique, deduped by DB trigger); time chart uses bar_start_time
-          let t = parseTime(
-            isTimechart ? r.bar_start_time : r.fixed_time || r.bar_start_time,
-          );
+          // Renko uses bar_index as time (avoids timestamp collision — fixed_time only 1ms apart = same second after parseTime)
+          // Time chart uses bar_start_time (bars are minutes apart, no collision risk)
+          let t = isTimechart ? parseTime(r.bar_start_time) : r.bar_index;
           if (t <= lastT) t = lastT + 1;
           lastT = t;
           candles.push({
@@ -825,7 +836,80 @@
           priceChart.timeScale().setVisibleLogicalRange(range);
           syncing = false;
         });
+
+        // Sync crosshair between price and volume charts
+        let crossSyncing = false;
+        priceChart.subscribeCrosshairMove((param) => {
+          if (crossSyncing) return;
+          crossSyncing = true;
+          volChart.setCrosshairPosition(
+            param.point ? param.point.x : NaN,
+            NaN,
+            volSeries,
+          );
+          if (!param.point) volChart.clearCrosshairPosition();
+          crossSyncing = false;
+        });
+        volChart.subscribeCrosshairMove((param) => {
+          if (crossSyncing) return;
+          crossSyncing = true;
+          priceChart.setCrosshairPosition(
+            param.point ? param.point.x : NaN,
+            NaN,
+            candleSeries,
+          );
+          if (!param.point) priceChart.clearCrosshairPosition();
+          crossSyncing = false;
+        });
         priceChart.timeScale().scrollToRealTime();
+      }
+
+      // ============================================================
+      // REBUILD SERIES DATA (used when multiple bars arrive at once)
+      // ============================================================
+      function rebuildSeriesData() {
+        if (!candleSeries) return;
+        const candles = [],
+          smaArr = [],
+          volArr = [],
+          volMaArr = [];
+        let lastT = 0;
+        for (let i = 0; i < rows.length; i++) {
+          const r = rows[i];
+          const col = vsaCandleColor(r.vsa_color, isTimechart);
+          const vc = vsaVolColor(r.vsa_color);
+          let t = isTimechart ? parseTime(r.bar_start_time) : r.bar_index;
+          if (t <= lastT) t = lastT + 1;
+          lastT = t;
+          candles.push({
+            time: t,
+            open: +r.open,
+            high: +r.high,
+            low: +r.low,
+            close: +r.close,
+            color: col,
+            borderColor: col,
+            wickColor: col,
+          });
+          if (i >= SMA_PERIOD - 1) {
+            let s = 0;
+            for (let j = i - SMA_PERIOD + 1; j <= i; j++) s += +rows[j].close;
+            smaArr.push({ time: t, value: s / SMA_PERIOD });
+          }
+          volArr.push({ time: t, value: +r.volume, color: vc });
+          if (i >= VOL_MA_PERIOD - 1) {
+            let s = 0;
+            for (let j = i - VOL_MA_PERIOD + 1; j <= i; j++)
+              s += +rows[j].volume;
+            volMaArr.push({ time: t, value: s / VOL_MA_PERIOD });
+          }
+        }
+        candleSeries.setData(candles);
+        smaSeries.setData(smaArr);
+        volSeries.setData(volArr);
+        volMaSeries.setData(volMaArr);
+        priceChart.timeScale().scrollToRealTime();
+        volChart.timeScale().scrollToRealTime();
       }
 
       // ============================================================
@@ -836,9 +920,7 @@
         const i = rows.length - 1;
         const col = vsaCandleColor(r.vsa_color, isTimechart);
         const vc = vsaVolColor(r.vsa_color);
-        const t = parseTime(
-          isTimechart ? r.bar_start_time : r.fixed_time || r.bar_start_time,
-        );
+        const t = isTimechart ? parseTime(r.bar_start_time) : r.bar_index;
         candleSeries.update({
           time: t,
           open: +r.open,
