@@ -394,8 +394,8 @@
       const SUPABASE_KEY = "sb_publishable_1Qv50ww1Krv0_8-Tgtdn-g_ahEOIOoP";
       const SMA_PERIOD = 26;
       const VOL_MA_PERIOD = 100;
-      const BARS_TO_LOAD = 500;
-      const BARS_1MIN = 1000;
+      const BARS_TO_LOAD = 500; // Renko initial load
+      const BARS_1MIN = 3000; // Time bars initial load (Supabase max rows set to 5000)
       const POLL_MIN_MS = 200;
 
       const INSTRUMENT_ORDER = [
@@ -586,18 +586,20 @@
                 encodeURIComponent(currentInst) +
                 "&brick_size=eq." +
                 currentSize +
-                "&order=bar_index.asc&limit=" +
+                "&order=bar_index.desc&limit=" +
                 limit,
             );
+            rows.reverse(); // fetch latest N descending, reverse to ascending for chart
           } else {
             rows = await sbGet(
               "/rest/v1/time_bars?instrument=eq." +
                 encodeURIComponent(currentInst) +
                 "&timeframe=eq." +
                 currentSize +
-                "&order=bar_index.asc&limit=" +
+                "&order=bar_index.desc&limit=" +
                 limit,
             );
+            rows.reverse(); // fetch latest N descending, reverse to ascending for chart
           }
           rows = rows || [];
           lastBarIndex = rows.length > 0 ? rows[rows.length - 1].bar_index : -1;
@@ -775,7 +777,10 @@
           const r = rows[i];
           const col = vsaCandleColor(r.vsa_color, isTimechart);
           const vc = vsaVolColor(r.vsa_color);
-          let t = parseTime(r.bar_start_time);
+          // Renko uses fixed_time (unique, deduped by DB trigger); time chart uses bar_start_time
+          let t = parseTime(
+            isTimechart ? r.bar_start_time : r.fixed_time || r.bar_start_time,
+          );
           if (t <= lastT) t = lastT + 1;
           lastT = t;
           candles.push({
@@ -831,7 +836,9 @@
         const i = rows.length - 1;
         const col = vsaCandleColor(r.vsa_color, isTimechart);
         const vc = vsaVolColor(r.vsa_color);
-        const t = parseTime(r.bar_start_time);
+        const t = parseTime(
+          isTimechart ? r.bar_start_time : r.fixed_time || r.bar_start_time,
+        );
         candleSeries.update({
           time: t,
           open: +r.open,
