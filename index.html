@@ -8,32 +8,34 @@
     />
     <title>VSA</title>
     <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#090b0f" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="VSA Renko" />
+    <link rel="apple-touch-icon" href="/icon.svg" />
     <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
       :root {
         --bg: #090b0f;
         --bg2: #0f1117;
-        --bg3: #161a23;
         --border: #252d3d;
         --border2: #2e3a50;
         --text: #c8d4e8;
         --text2: #7a8fa8;
         --accent: #3d8ef0;
-        --sep: #1e2738;
         --header-h: 44px;
-        --tabs1-h: 40px;
-        --tabs2-h: 36px;
+        --tabs-h: 36px;
         --left-w: 48px;
       }
-
       * {
         box-sizing: border-box;
         margin: 0;
         padding: 0;
         -webkit-tap-highlight-color: transparent;
       }
-
       html,
       body {
         height: 100%;
@@ -43,7 +45,6 @@
         color: var(--text);
         font-family: "SF Mono", "Fira Code", "Consolas", monospace;
       }
-
       #app {
         display: flex;
         flex-direction: column;
@@ -52,11 +53,6 @@
         overflow: hidden;
       }
 
-      /* ============================================================
-     PORTRAIT LAYOUT
-  ============================================================ */
-
-      /* Header — portrait only */
       .header {
         height: var(--header-h);
         min-height: var(--header-h);
@@ -67,7 +63,6 @@
         padding: 0 8px;
         gap: 6px;
         flex-shrink: 0;
-        z-index: 10;
       }
       .header-logo {
         font-size: 10px;
@@ -104,10 +99,9 @@
         box-shadow: 0 0 7px #3df07a;
       }
 
-      /* Unified tab row — portrait */
       .unified-tabs {
-        height: var(--tabs2-h);
-        min-height: var(--tabs2-h);
+        height: var(--tabs-h);
+        min-height: var(--tabs-h);
         background: var(--bg2);
         border-bottom: 1px solid var(--border);
         display: flex;
@@ -121,7 +115,6 @@
       .unified-tabs::-webkit-scrollbar {
         display: none;
       }
-
       .tab-sep {
         width: 1px;
         height: 16px;
@@ -130,11 +123,6 @@
         margin: 0 3px;
       }
 
-      /* ============================================================
-     LANDSCAPE LAYOUT
-  ============================================================ */
-
-      /* Landscape wrapper — flex row */
       .landscape-wrap {
         display: none;
         flex: 1;
@@ -142,8 +130,6 @@
         overflow: hidden;
         min-height: 0;
       }
-
-      /* Left panel */
       .left-panel {
         width: var(--left-w);
         min-width: var(--left-w);
@@ -168,7 +154,6 @@
       .left-scroll::-webkit-scrollbar {
         display: none;
       }
-
       .left-sep {
         width: 28px;
         height: 1px;
@@ -176,7 +161,6 @@
         flex-shrink: 0;
         margin: 4px 0;
       }
-
       .left-dot {
         width: 6px;
         height: 6px;
@@ -192,41 +176,6 @@
         box-shadow: 0 0 6px #3df07a;
       }
 
-      /* Vertical tab */
-      .vtab {
-        width: 36px;
-        height: 28px;
-        border-radius: 4px;
-        border: 1px solid transparent;
-        background: transparent;
-        color: var(--text2);
-        font-family: inherit;
-        font-size: 9px;
-        font-weight: 700;
-        letter-spacing: 0.04em;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.12s;
-        flex-shrink: 0;
-        white-space: nowrap;
-      }
-      .vtab:active {
-        color: var(--text);
-      }
-      .vtab.active {
-        background: var(--accent);
-        border-color: var(--accent);
-        color: #fff;
-      }
-      .vtab.time {
-        font-size: 8px;
-      }
-
-      /* ============================================================
-     SHARED TAB STYLE
-  ============================================================ */
       .tab {
         height: 24px;
         padding: 0 9px;
@@ -243,9 +192,6 @@
         flex-shrink: 0;
         transition: all 0.12s;
       }
-      .tab:active {
-        color: var(--text);
-      }
       .tab.active {
         background: var(--accent);
         border-color: var(--accent);
@@ -254,10 +200,29 @@
       .tab.time {
         font-size: 9px;
       }
+      .vtab {
+        width: 36px;
+        height: 28px;
+        border-radius: 4px;
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--text2);
+        font-family: inherit;
+        font-size: 9px;
+        font-weight: 700;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.12s;
+        flex-shrink: 0;
+      }
+      .vtab.active {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
 
-      /* ============================================================
-     CHART AREA — shared portrait/landscape
-  ============================================================ */
       .chart-area {
         flex: 1;
         display: flex;
@@ -277,7 +242,6 @@
         min-height: 40px;
         overflow: hidden;
       }
-
       .drag-handle {
         height: 12px;
         min-height: 12px;
@@ -299,13 +263,7 @@
         background: var(--border2);
         border-radius: 1px;
       }
-      .drag-handle:active .grip {
-        background: var(--accent);
-      }
 
-      /* ============================================================
-     PORTRAIT CONTENT WRAPPER
-  ============================================================ */
       .portrait-content {
         flex: 1;
         display: flex;
@@ -314,9 +272,6 @@
         min-height: 0;
       }
 
-      /* ============================================================
-     LOADING / EMPTY / TOAST
-  ============================================================ */
       .loading-overlay {
         position: absolute;
         inset: 0;
@@ -371,9 +326,6 @@
         transform: translateX(-50%) translateY(0);
       }
 
-      /* ============================================================
-     ORIENTATION MEDIA QUERIES
-  ============================================================ */
       @media (orientation: portrait) {
         .header {
           display: flex;
@@ -388,7 +340,6 @@
           display: none;
         }
       }
-
       @media (orientation: landscape) {
         .header {
           display: none;
@@ -407,15 +358,12 @@
   </head>
   <body>
     <div id="app">
-      <!-- ===== PORTRAIT LAYOUT ===== -->
       <div class="header">
         <div class="header-logo">VSA</div>
         <div class="inst-tabs-portrait" id="inst-tabs-portrait"></div>
         <div class="status-dot" id="status-dot-portrait"></div>
       </div>
-
       <div class="unified-tabs" id="unified-tabs"></div>
-
       <div class="portrait-content">
         <div class="chart-area" id="chart-area-portrait">
           <div id="price-panel"></div>
@@ -429,14 +377,9 @@
           </div>
         </div>
       </div>
-
-      <!-- ===== LANDSCAPE LAYOUT ===== -->
       <div class="landscape-wrap" id="landscape-wrap">
         <div class="left-panel">
-          <div class="left-scroll" id="left-scroll">
-            <div class="left-dot" id="status-dot-landscape"></div>
-            <!-- instrument vtabs, sep, size vtabs rendered here -->
-          </div>
+          <div class="left-scroll" id="left-scroll"></div>
         </div>
         <div class="chart-area" id="chart-area-landscape"></div>
       </div>
@@ -451,8 +394,9 @@
       const SUPABASE_KEY = "sb_publishable_1Qv50ww1Krv0_8-Tgtdn-g_ahEOIOoP";
       const SMA_PERIOD = 26;
       const VOL_MA_PERIOD = 100;
-      const BARS_TO_LOAD = 500; // Renko + 5min + 15min
-      const BARS_TO_LOAD_1MIN = 1000; // 1min needs more bars
+      const BARS_TO_LOAD = 500;
+      const BARS_1MIN = 1000;
+      const POLL_MIN_MS = 200;
 
       const INSTRUMENT_ORDER = [
         "GC",
@@ -466,8 +410,8 @@
         "JPY",
         "AUD",
       ];
+      const LOCAL_OFFSET_SECONDS = -new Date().getTimezoneOffset() * 60;
 
-      // VSA colors
       const VSA = {
         Yellow: "#f0c93d",
         Magenta: "#e040fb",
@@ -476,90 +420,106 @@
         Lime: "#3df07a",
         Cyan: "#3dd4f0",
       };
-      // Price candles — Yellow → Cyan (no demand not tracked on Renko)
-      function vsaColor(name) {
-        return name === "Yellow" ? VSA.Cyan : VSA[name] || VSA.Cyan;
+      function vsaCandleColor(name, isTimechart) {
+        return isTimechart || name !== "Yellow"
+          ? VSA[name] || VSA.Cyan
+          : VSA.Cyan;
       }
-      // Volume histogram — Yellow kept
       function vsaVolColor(name) {
         return VSA[name] || VSA.Cyan;
       }
 
       // ============================================================
-      // SUPABASE
+      // SUPABASE HELPERS
       // ============================================================
-      const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      const HEADERS = {
+        apikey: SUPABASE_KEY,
+        Authorization: "Bearer " + SUPABASE_KEY,
+        "Content-Type": "application/json",
+      };
+
+      async function sbGet(path) {
+        const res = await fetch(SUPABASE_URL + path, { headers: HEADERS });
+        if (!res.ok) throw new Error("GET " + res.status);
+        return res.json();
+      }
+
+      async function sbRpc(fn, params) {
+        const res = await fetch(SUPABASE_URL + "/rest/v1/rpc/" + fn, {
+          method: "POST",
+          headers: HEADERS,
+          body: JSON.stringify(params),
+        });
+        if (!res.ok) throw new Error("RPC " + res.status);
+        return res.json();
+      }
 
       // ============================================================
       // STATE
       // ============================================================
-      let instruments = []; // sorted full names
-      let allSizes = {}; // { "GC APR26": [6,9,12] }
-      let allTimeframes = {}; // { "GC APR26": [1,5,15] }
+      let instruments = [];
+      let allSizes = {};
+      let allTimeframes = {};
       let currentInst = null;
-      let currentSize = null; // number for renko, or "1m"/"5m"/"15m" for time
-      let currentType = null; // 'renko' or 'time'
-      let instData = {}; // { renko_6: [rows], renko_9: [rows], time_1: [rows], ... }
-      let realtimeSub = null;
+      let currentType = null;
+      let currentSize = null;
+      let rows = [];
+      let lastBarIndex = -1;
+      let isTimechart = false;
 
-      // Chart refs
-      let priceChart = null;
-      let volChart = null;
-      let candleSeries = null;
-      let smaSeries = null;
-      let volSeries = null;
-      let volMaSeries = null;
-      let lastBarTime = 0;
+      let pollTimer = null;
+      let pollActive = false;
 
-      // Panel sizing
-      let pricePanelH = 0;
-      let volPanelH = 0;
-      let isLandscape = false;
+      let priceChart = null,
+        volChart = null;
+      let candleSeries = null,
+        smaSeries = null,
+        volSeries = null,
+        volMaSeries = null;
+
+      let pricePanelH = 0,
+        volPanelH = 0,
+        isLandscape = false;
 
       // ============================================================
       // INIT
       // ============================================================
       async function init() {
         checkOrientation();
+        initPanelContainers();
+        initDragHandle();
         window.addEventListener("resize", onResize);
         await loadMeta();
       }
 
       // ============================================================
-      // LOAD META
+      // META
       // ============================================================
       async function loadMeta() {
         try {
           const [r1, r2, r3] = await Promise.all([
-            db.from("renko_instruments").select("instrument"),
-            db.from("renko_sizes").select("instrument, brick_size"),
-            db.from("time_bar_sizes").select("instrument, timeframe"),
+            sbGet("/rest/v1/renko_instruments?select=instrument"),
+            sbGet("/rest/v1/renko_sizes?select=instrument,brick_size"),
+            sbGet("/rest/v1/time_bar_sizes?select=instrument,timeframe"),
           ]);
 
-          if (r1.error) throw r1.error;
-          if (r2.error) throw r2.error;
-          if (r3.error) throw r3.error;
-
-          // Build allSizes
           allSizes = {};
-          for (const r of r2.data) {
+          for (const r of r2) {
             if (!allSizes[r.instrument]) allSizes[r.instrument] = [];
             allSizes[r.instrument].push(r.brick_size);
           }
           for (const k of Object.keys(allSizes))
             allSizes[k].sort((a, b) => a - b);
 
-          // Build allTimeframes
           allTimeframes = {};
-          for (const r of r3.data) {
+          for (const r of r3) {
             if (!allTimeframes[r.instrument]) allTimeframes[r.instrument] = [];
             allTimeframes[r.instrument].push(r.timeframe);
           }
           for (const k of Object.keys(allTimeframes))
             allTimeframes[k].sort((a, b) => a - b);
 
-          // Sort instruments
-          instruments = r1.data.map((r) => r.instrument);
+          instruments = r1.map((r) => r.instrument);
           instruments.sort((a, b) => {
             const ra = a.split(" ")[0],
               rb = b.split(" ")[0];
@@ -571,325 +531,417 @@
             return ia - ib;
           });
 
-          renderTabs();
-
           if (instruments.length > 0) await selectInstrument(instruments[0]);
         } catch (e) {
-          showToast("Failed to connect");
+          showToast("Connection failed");
           console.error(e);
         }
-      }
-
-      // ============================================================
-      // LOAD DATA FOR INSTRUMENT
-      // ============================================================
-      async function loadInstrumentData(inst) {
-        showChartLoading(true);
-        instData = {};
-
-        const sizes = allSizes[inst] || [];
-        const timeframes = allTimeframes[inst] || [];
-
-        try {
-          await Promise.all([
-            // Renko data
-            ...sizes.map(async (sz) => {
-              const { data, error } = await db
-                .from("renko_bricks")
-                .select("*")
-                .eq("instrument", inst)
-                .eq("brick_size", sz)
-                .order("time", { ascending: false })
-                .order("id", { ascending: false })
-                .limit(BARS_TO_LOAD);
-              if (error) throw error;
-              instData["renko_" + sz] = data.reverse();
-            }),
-            // Time data
-            ...timeframes.map(async (tf) => {
-              const limit = tf === 1 ? BARS_TO_LOAD_1MIN : BARS_TO_LOAD;
-              const { data, error } = await db
-                .from("time_bars")
-                .select("*")
-                .eq("instrument", inst)
-                .eq("timeframe", tf)
-                .order("time", { ascending: false })
-                .order("id", { ascending: false })
-                .limit(limit);
-              if (error) throw error;
-              instData["time_" + tf] = data.reverse();
-            }),
-          ]);
-        } catch (e) {
-          showToast("Failed to load data");
-          console.error(e);
-        }
-
-        showChartLoading(false);
-      }
-
-      // ============================================================
-      // REALTIME
-      // ============================================================
-      function subscribeRealtime(inst) {
-        if (realtimeSub) {
-          db.removeChannel(realtimeSub);
-          realtimeSub = null;
-        }
-
-        realtimeSub = db
-          .channel("vsa_rt_" + inst)
-          .on(
-            "postgres_changes",
-            {
-              event: "INSERT",
-              schema: "public",
-              table: "renko_bricks",
-              filter: "instrument=eq." + inst,
-            },
-            (p) => handleInsertRenko(p.new),
-          )
-          .on(
-            "postgres_changes",
-            {
-              event: "INSERT",
-              schema: "public",
-              table: "time_bars",
-              filter: "instrument=eq." + inst,
-            },
-            (p) => handleInsertTime(p.new),
-          )
-          .on(
-            "postgres_changes",
-            { event: "DELETE", schema: "public", table: "renko_bricks" },
-            () => handleDelete(),
-          )
-          .on(
-            "postgres_changes",
-            { event: "DELETE", schema: "public", table: "time_bars" },
-            () => handleDelete(),
-          )
-          .subscribe((status) => setLive(status === "SUBSCRIBED"));
-      }
-
-      function handleInsertRenko(row) {
-        if (row.instrument !== currentInst) return;
-        const key = "renko_" + row.brick_size;
-        if (!instData[key]) instData[key] = [];
-        instData[key].push(row);
-        if (instData[key].length > BARS_TO_LOAD) instData[key].shift();
-        if (
-          currentType === "renko" &&
-          currentSize === row.brick_size &&
-          candleSeries
-        )
-          appendBar(row, instData[key].length - 1, false);
-      }
-
-      function handleInsertTime(row) {
-        if (row.instrument !== currentInst) return;
-        const key = "time_" + row.timeframe;
-        if (!instData[key]) instData[key] = [];
-        instData[key].push(row);
-        const cap = row.timeframe === 1 ? BARS_TO_LOAD_1MIN : BARS_TO_LOAD;
-        if (instData[key].length > cap) instData[key].shift();
-        if (
-          currentType === "time" &&
-          currentSize === row.timeframe &&
-          candleSeries
-        )
-          appendBar(row, instData[key].length - 1, true);
-      }
-
-      function handleDelete() {
-        setTimeout(async () => {
-          await loadInstrumentData(currentInst);
-          renderCurrentChart();
-        }, 3000);
       }
 
       // ============================================================
       // SELECT INSTRUMENT
       // ============================================================
       async function selectInstrument(inst) {
+        if (inst === currentInst) return;
         currentInst = inst;
-        renderTabs();
-        await loadInstrumentData(inst);
-        subscribeRealtime(inst);
-
-        // Auto-select first renko size
         const sizes = allSizes[inst] || [];
+        const tfs = allTimeframes[inst] || [];
         if (sizes.length > 0) {
           currentType = "renko";
           currentSize = sizes[0];
-        } else {
-          const tfs = allTimeframes[inst] || [];
-          if (tfs.length > 0) {
-            currentType = "time";
-            currentSize = tfs[0];
-          }
+        } else if (tfs.length > 0) {
+          currentType = "time";
+          currentSize = tfs[0];
         }
-
         renderTabs();
-        initPanelHeights();
-        renderCurrentChart();
+        await loadAndRender();
       }
 
       // ============================================================
       // SELECT CHART
       // ============================================================
-      function selectRenko(sz) {
-        currentType = "renko";
-        currentSize = sz;
+      async function selectChart(type, size) {
+        currentType = type;
+        currentSize = size;
         renderTabs();
-        renderCurrentChart();
-      }
-
-      function selectTime(tf) {
-        currentType = "time";
-        currentSize = tf;
-        renderTabs();
-        renderCurrentChart();
-      }
-
-      function renderCurrentChart() {
-        if (!currentType) return;
-        const key = currentType + "_" + currentSize;
-        const rows = instData[key] || [];
-        buildCharts(rows, currentType === "time");
+        await loadAndRender();
       }
 
       // ============================================================
-      // RENDER TABS
+      // LOAD + RENDER
+      // ============================================================
+      async function loadAndRender() {
+        stopPoll();
+        showChartLoading(true);
+        isTimechart = currentType === "time";
+
+        try {
+          const limit =
+            currentType === "time" && currentSize === 1
+              ? BARS_1MIN
+              : BARS_TO_LOAD;
+          if (currentType === "renko") {
+            rows = await sbGet(
+              "/rest/v1/renko_bricks?instrument=eq." +
+                encodeURIComponent(currentInst) +
+                "&brick_size=eq." +
+                currentSize +
+                "&order=bar_index.asc&limit=" +
+                limit,
+            );
+          } else {
+            rows = await sbGet(
+              "/rest/v1/time_bars?instrument=eq." +
+                encodeURIComponent(currentInst) +
+                "&timeframe=eq." +
+                currentSize +
+                "&order=bar_index.asc&limit=" +
+                limit,
+            );
+          }
+          rows = rows || [];
+          lastBarIndex = rows.length > 0 ? rows[rows.length - 1].bar_index : -1;
+          buildCharts();
+        } catch (e) {
+          showToast("Failed to load");
+          console.error(e);
+        }
+
+        showChartLoading(false);
+        startPoll();
+      }
+
+      // ============================================================
+      // POLLING
+      // ============================================================
+      function startPoll() {
+        pollActive = true;
+        schedulePoll();
+      }
+      function stopPoll() {
+        pollActive = false;
+        if (pollTimer) {
+          clearTimeout(pollTimer);
+          pollTimer = null;
+        }
+      }
+      function schedulePoll() {
+        if (!pollActive) return;
+        pollTimer = setTimeout(doPoll, POLL_MIN_MS);
+      }
+
+      async function doPoll() {
+        if (!pollActive) return;
+        const t0 = Date.now();
+        try {
+          let newRows;
+          if (currentType === "renko") {
+            newRows = await sbRpc("get_new_renko_bars", {
+              p_instrument: currentInst,
+              p_brick_size: currentSize,
+              p_since: lastBarIndex,
+            });
+          } else {
+            newRows = await sbRpc("get_new_time_bars", {
+              p_instrument: currentInst,
+              p_timeframe: currentSize,
+              p_since: lastBarIndex,
+            });
+          }
+          if (newRows && newRows.length > 0) {
+            setLive(true);
+            for (const r of newRows) {
+              rows.push(r);
+              appendBar(r);
+            }
+            lastBarIndex = rows[rows.length - 1].bar_index;
+          }
+        } catch (e) {
+          setLive(false);
+          console.error("Poll:", e);
+        }
+
+        const wait = Math.max(0, POLL_MIN_MS - (Date.now() - t0));
+        if (pollActive) pollTimer = setTimeout(doPoll, wait);
+      }
+
+      // ============================================================
+      // BUILD CHARTS
+      // ============================================================
+      function destroyCharts() {
+        if (priceChart) {
+          priceChart.remove();
+          priceChart = null;
+        }
+        if (volChart) {
+          volChart.remove();
+          volChart = null;
+        }
+        candleSeries = smaSeries = volSeries = volMaSeries = null;
+      }
+
+      function buildCharts() {
+        destroyCharts();
+        if (rows.length === 0) return;
+
+        const priceEl = document.getElementById("price-panel");
+        const volEl = document.getElementById("volume-panel");
+        const layout = {
+          background: { color: "#090b0f" },
+          textColor: "#4a5a72",
+          fontFamily: "'SF Mono','Fira Code',monospace",
+          fontSize: 10,
+        };
+        const grid = {
+          vertLines: { color: "#0c0f14" },
+          horzLines: { color: "#0c0f14" },
+        };
+        const cross = {
+          mode: LightweightCharts.CrosshairMode.Normal,
+          vertLine: { color: "#3d8ef044", labelBackgroundColor: "#1a2540" },
+          horzLine: { color: "#3d8ef044", labelBackgroundColor: "#1a2540" },
+        };
+
+        priceChart = LightweightCharts.createChart(priceEl, {
+          width: priceEl.clientWidth,
+          height: priceEl.clientHeight,
+          layout,
+          grid,
+          crosshair: cross,
+          rightPriceScale: { borderColor: "#161a23" },
+          timeScale: {
+            borderColor: "#161a23",
+            timeVisible: true,
+            secondsVisible: false,
+          },
+          handleScroll: true,
+          handleScale: true,
+        });
+        candleSeries = priceChart.addCandlestickSeries({
+          upColor: VSA.Cyan,
+          downColor: VSA.Cyan,
+          borderUpColor: VSA.Cyan,
+          borderDownColor: VSA.Cyan,
+          wickUpColor: VSA.Cyan,
+          wickDownColor: VSA.Cyan,
+        });
+        smaSeries = priceChart.addLineSeries({
+          color: "#f09a3d",
+          lineWidth: 1,
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
+
+        volChart = LightweightCharts.createChart(volEl, {
+          width: volEl.clientWidth,
+          height: volEl.clientHeight,
+          layout,
+          grid,
+          crosshair: {
+            ...cross,
+            horzLine: { visible: false, labelVisible: false },
+          },
+          rightPriceScale: {
+            borderColor: "#161a23",
+            scaleMargins: { top: 0.1, bottom: 0.0 },
+          },
+          timeScale: {
+            borderColor: "#161a23",
+            timeVisible: true,
+            secondsVisible: false,
+          },
+          handleScroll: true,
+          handleScale: true,
+        });
+        volSeries = volChart.addHistogramSeries({
+          priceScaleId: "right",
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
+        volMaSeries = volChart.addLineSeries({
+          color: "#f09a3d",
+          lineWidth: 1,
+          priceScaleId: "right",
+          priceLineVisible: false,
+          lastValueVisible: false,
+        });
+
+        const candles = [],
+          smaArr = [],
+          volArr = [],
+          volMaArr = [];
+        let lastT = 0;
+        for (let i = 0; i < rows.length; i++) {
+          const r = rows[i];
+          const col = vsaCandleColor(r.vsa_color, isTimechart);
+          const vc = vsaVolColor(r.vsa_color);
+          let t = parseTime(r.bar_start_time);
+          if (t <= lastT) t = lastT + 1;
+          lastT = t;
+          candles.push({
+            time: t,
+            open: +r.open,
+            high: +r.high,
+            low: +r.low,
+            close: +r.close,
+            color: col,
+            borderColor: col,
+            wickColor: col,
+          });
+          if (i >= SMA_PERIOD - 1) {
+            let s = 0;
+            for (let j = i - SMA_PERIOD + 1; j <= i; j++) s += +rows[j].close;
+            smaArr.push({ time: t, value: s / SMA_PERIOD });
+          }
+          volArr.push({ time: t, value: +r.volume, color: vc });
+          if (i >= VOL_MA_PERIOD - 1) {
+            let s = 0;
+            for (let j = i - VOL_MA_PERIOD + 1; j <= i; j++)
+              s += +rows[j].volume;
+            volMaArr.push({ time: t, value: s / VOL_MA_PERIOD });
+          }
+        }
+
+        candleSeries.setData(candles);
+        smaSeries.setData(smaArr);
+        volSeries.setData(volArr);
+        volMaSeries.setData(volMaArr);
+
+        let syncing = false;
+        priceChart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+          if (syncing || !range) return;
+          syncing = true;
+          volChart.timeScale().setVisibleLogicalRange(range);
+          syncing = false;
+        });
+        volChart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
+          if (syncing || !range) return;
+          syncing = true;
+          priceChart.timeScale().setVisibleLogicalRange(range);
+          syncing = false;
+        });
+        priceChart.timeScale().scrollToRealTime();
+      }
+
+      // ============================================================
+      // APPEND BAR
+      // ============================================================
+      function appendBar(r) {
+        if (!candleSeries) return;
+        const i = rows.length - 1;
+        const col = vsaCandleColor(r.vsa_color, isTimechart);
+        const vc = vsaVolColor(r.vsa_color);
+        const t = parseTime(r.bar_start_time);
+        candleSeries.update({
+          time: t,
+          open: +r.open,
+          high: +r.high,
+          low: +r.low,
+          close: +r.close,
+          color: col,
+          borderColor: col,
+          wickColor: col,
+        });
+        if (i >= SMA_PERIOD - 1) {
+          let s = 0;
+          for (let j = i - SMA_PERIOD + 1; j <= i; j++) s += +rows[j].close;
+          smaSeries.update({ time: t, value: s / SMA_PERIOD });
+        }
+        volSeries.update({ time: t, value: +r.volume, color: vc });
+        if (i >= VOL_MA_PERIOD - 1) {
+          let s = 0;
+          for (let j = i - VOL_MA_PERIOD + 1; j <= i; j++) s += +rows[j].volume;
+          volMaSeries.update({ time: t, value: s / VOL_MA_PERIOD });
+        }
+        priceChart.timeScale().scrollToRealTime();
+        volChart.timeScale().scrollToRealTime();
+      }
+
+      // ============================================================
+      // TABS
       // ============================================================
       function renderTabs() {
-        renderPortraitTabs();
-        renderLandscapeTabs();
-      }
-
-      function instTabHtml(inst, cls) {
-        const root = inst.split(" ")[0];
-        const active = inst === currentInst ? "active" : "";
-        return `<button class="${cls} ${active}" onclick="selectInstrument('${inst.replace(/'/g, "\\'")}')">
-    ${root}</button>`;
-      }
-
-      function sizeTabHtml(sz, cls) {
-        const active =
-          currentType === "renko" && currentSize === sz ? "active" : "";
-        return `<button class="${cls} ${active}" onclick="selectRenko(${sz})">${sz}</button>`;
-      }
-
-      function timeTabHtml(tf, cls, extra) {
-        const active =
-          currentType === "time" && currentSize === tf ? "active" : "";
-        const label = tf + "m";
-        return `<button class="${cls} ${extra || ""} ${active}" onclick="selectTime(${tf})">${label}</button>`;
-      }
-
-      function renderPortraitTabs() {
-        // Instrument tabs
         document.getElementById("inst-tabs-portrait").innerHTML = instruments
-          .map((i) => instTabHtml(i, "tab"))
+          .map((inst) => {
+            const root = inst.split(" ")[0];
+            return `<button class="tab${inst === currentInst ? " active" : ""}" onclick="selectInstrument('${esc(inst)}')">${root}</button>`;
+          })
           .join("");
 
-        // Unified size + timeframe tabs
         const sizes = currentInst ? allSizes[currentInst] || [] : [];
-        const timeframes = currentInst ? allTimeframes[currentInst] || [] : [];
-        let html = sizes.map((sz) => sizeTabHtml(sz, "tab")).join("");
-        if (sizes.length > 0 && timeframes.length > 0)
-          html += '<div class="tab-sep"></div>';
-        html += timeframes.map((tf) => timeTabHtml(tf, "tab", "time")).join("");
+        const tfs = currentInst ? allTimeframes[currentInst] || [] : [];
+        let html = sizes
+          .map(
+            (sz) =>
+              `<button class="tab${currentType === "renko" && currentSize === sz ? " active" : ""}" onclick="selectChart('renko',${sz})">${sz}</button>`,
+          )
+          .join("");
+        if (sizes.length && tfs.length) html += '<div class="tab-sep"></div>';
+        html += tfs
+          .map(
+            (tf) =>
+              `<button class="tab time${currentType === "time" && currentSize === tf ? " active" : ""}" onclick="selectChart('time',${tf})">${tf}m</button>`,
+          )
+          .join("");
         document.getElementById("unified-tabs").innerHTML = html;
-      }
 
-      function renderLandscapeTabs() {
-        const sizes = currentInst ? allSizes[currentInst] || [] : [];
-        const timeframes = currentInst ? allTimeframes[currentInst] || [] : [];
-
-        let html = instruments
-          .map((i) => {
-            const root = i.split(" ")[0];
-            const active = i === currentInst ? "active" : "";
-            return `<button class="vtab ${active}" onclick="selectInstrument('${i.replace(/'/g, "\\'")}')">
-      ${root}</button>`;
-          })
+        const live = document
+          .getElementById("status-dot-portrait")
+          .classList.contains("live");
+        let lh = `<div class="left-dot${live ? " live" : ""}" id="status-dot-landscape"></div>`;
+        lh += instruments
+          .map(
+            (inst) =>
+              `<button class="vtab${inst === currentInst ? " active" : ""}" onclick="selectInstrument('${esc(inst)}')">${inst.split(" ")[0]}</button>`,
+          )
           .join("");
-
-        if (sizes.length > 0 || timeframes.length > 0)
-          html += '<div class="left-sep"></div>';
-
-        html += sizes
-          .map((sz) => {
-            const active =
-              currentType === "renko" && currentSize === sz ? "active" : "";
-            return `<button class="vtab ${active}" onclick="selectRenko(${sz})">${sz}</button>`;
-          })
+        if (sizes.length || tfs.length) lh += '<div class="left-sep"></div>';
+        lh += sizes
+          .map(
+            (sz) =>
+              `<button class="vtab${currentType === "renko" && currentSize === sz ? " active" : ""}" onclick="selectChart('renko',${sz})">${sz}</button>`,
+          )
           .join("");
-
-        if (sizes.length > 0 && timeframes.length > 0)
-          html += '<div class="left-sep"></div>';
-
-        html += timeframes
-          .map((tf) => {
-            const active =
-              currentType === "time" && currentSize === tf ? "active" : "";
-            return `<button class="vtab time ${active}" onclick="selectTime(${tf})">${tf}m</button>`;
-          })
+        if (sizes.length && tfs.length) lh += '<div class="left-sep"></div>';
+        lh += tfs
+          .map(
+            (tf) =>
+              `<button class="vtab${currentType === "time" && currentSize === tf ? " active" : ""}" onclick="selectChart('time',${tf})">${tf}m</button>`,
+          )
           .join("");
-
-        document.getElementById("left-scroll").innerHTML =
-          `<div class="left-dot ${document.getElementById("status-dot-portrait").classList.contains("live") ? "live" : ""}" id="status-dot-landscape"></div>` +
-          html;
+        document.getElementById("left-scroll").innerHTML = lh;
       }
 
       // ============================================================
-      // ORIENTATION
+      // ORIENTATION + RESIZE
       // ============================================================
       function checkOrientation() {
         isLandscape = window.innerWidth > window.innerHeight;
       }
 
       function onResize() {
-        const wasLandscape = isLandscape;
+        const was = isLandscape;
         checkOrientation();
-        initPanelHeights();
-
-        // Sync chart panels to correct parent after orientation change
-        if (wasLandscape !== isLandscape) {
-          const priceEl = document.getElementById("price-panel");
-          const volEl = document.getElementById("volume-panel");
-          const handle = document.getElementById("drag-handle");
+        if (was !== isLandscape) {
           const target = isLandscape
             ? document.getElementById("chart-area-landscape")
             : document.getElementById("chart-area-portrait");
-
-          target.appendChild(priceEl);
-          target.appendChild(handle);
-          target.appendChild(volEl);
+          target.appendChild(document.getElementById("price-panel"));
+          target.appendChild(document.getElementById("drag-handle"));
+          target.appendChild(document.getElementById("volume-panel"));
           target.appendChild(document.getElementById("chart-loading"));
-
-          renderCurrentChart();
+          buildCharts();
           return;
         }
-
+        initPanelHeights();
         resizeCharts();
       }
 
-      // ============================================================
-      // PANEL HEIGHT
-      // ============================================================
       function initPanelHeights() {
         checkOrientation();
-        let totalH;
-
-        if (isLandscape) {
-          totalH = window.innerHeight - 12;
-        } else {
-          const headerH = 44 + 36; // header + unified tabs
-          totalH = window.innerHeight - headerH - 12;
-        }
-
+        const totalH = isLandscape
+          ? window.innerHeight - 12
+          : window.innerHeight - 44 - 36 - 12;
         pricePanelH = Math.floor(totalH * 0.7);
         volPanelH = totalH - pricePanelH;
         applyPanelHeights();
@@ -916,294 +968,53 @@
       // ============================================================
       // DRAG HANDLE
       // ============================================================
-      (function () {
+      function initDragHandle() {
         const handle = document.getElementById("drag-handle");
         let dragging = false,
           startY = 0,
           startPH = 0,
           startVH = 0;
-        function start(e) {
+        const onStart = (e) => {
           dragging = true;
           startY = e.touches ? e.touches[0].clientY : e.clientY;
           startPH = pricePanelH;
           startVH = volPanelH;
           e.preventDefault();
-        }
-        function move(e) {
+        };
+        const onMove = (e) => {
           if (!dragging) return;
           const y = e.touches ? e.touches[0].clientY : e.clientY;
-          const min = 40,
-            max = startPH + startVH - min;
-          pricePanelH = Math.max(min, Math.min(max, startPH + (y - startY)));
+          pricePanelH = Math.max(
+            40,
+            Math.min(startPH + startVH - 40, startPH + (y - startY)),
+          );
           volPanelH = startPH + startVH - pricePanelH;
           applyPanelHeights();
           resizeCharts();
           e.preventDefault();
-        }
-        function end() {
+        };
+        const onEnd = () => {
           dragging = false;
-        }
-        handle.addEventListener("mousedown", start, { passive: false });
-        handle.addEventListener("touchstart", start, { passive: false });
-        window.addEventListener("mousemove", move, { passive: false });
-        window.addEventListener("touchmove", move, { passive: false });
-        window.addEventListener("mouseup", end);
-        window.addEventListener("touchend", end);
-      })();
-
-      // ============================================================
-      // BUILD CHARTS
-      // ============================================================
-      function destroyCharts() {
-        if (priceChart) {
-          priceChart.remove();
-          priceChart = null;
-        }
-        if (volChart) {
-          volChart.remove();
-          volChart = null;
-        }
-        candleSeries = smaSeries = volSeries = volMaSeries = null;
-        lastBarTime = 0;
-      }
-
-      function buildCharts(rows, isTimechart) {
-        showChartLoading(true);
-        destroyCharts();
-        requestAnimationFrame(() => {
-          if (rows.length > 0) _buildCharts(rows, isTimechart);
-          showChartLoading(false);
-        });
-      }
-
-      function _buildCharts(rows, isTimechart) {
-        const priceEl = document.getElementById("price-panel");
-        const volEl = document.getElementById("volume-panel");
-
-        const baseLayout = {
-          background: { color: "#090b0f" },
-          textColor: "#8ba0b8",
-          fontFamily: "'SF Mono','Fira Code',monospace",
-          fontSize: 10,
         };
-        const baseGrid = {
-          vertLines: { color: "#0c0f14" },
-          horzLines: { color: "#0c0f14" },
-        };
-        const baseCross = {
-          mode: LightweightCharts.CrosshairMode.Normal,
-          vertLine: { color: "#3d8ef044", labelBackgroundColor: "#1a2540" },
-          horzLine: { color: "#3d8ef044", labelBackgroundColor: "#1a2540" },
-        };
-
-        priceChart = LightweightCharts.createChart(priceEl, {
-          width: priceEl.clientWidth,
-          height: priceEl.clientHeight,
-          layout: baseLayout,
-          grid: baseGrid,
-          crosshair: baseCross,
-          rightPriceScale: { borderColor: "#161a23" },
-          timeScale: {
-            borderColor: "#161a23",
-            timeVisible: true,
-            secondsVisible: false,
-            localization: { locale: "sv-SE" },
-            offset: LOCAL_OFFSET_SECONDS / 60,
-          },
-          handleScroll: true,
-          handleScale: true,
-        });
-
-        candleSeries = priceChart.addCandlestickSeries({
-          // No default colors — per-bar color/borderColor/wickColor take full control
-          priceLineVisible: false,
-        });
-
-        smaSeries = priceChart.addLineSeries({
-          color: "#f09a3d",
-          lineWidth: 1,
-          priceLineVisible: false,
-          lastValueVisible: false,
-        });
-
-        volChart = LightweightCharts.createChart(volEl, {
-          width: volEl.clientWidth,
-          height: volEl.clientHeight,
-          layout: baseLayout,
-          grid: baseGrid,
-          crosshair: {
-            ...baseCross,
-            horzLine: { visible: false, labelVisible: false },
-          },
-          rightPriceScale: {
-            borderColor: "#161a23",
-            scaleMargins: { top: 0.1, bottom: 0.0 },
-          },
-          timeScale: {
-            borderColor: "#161a23",
-            timeVisible: true,
-            secondsVisible: false,
-            localization: { locale: "sv-SE" },
-            offset: LOCAL_OFFSET_SECONDS / 60,
-          },
-          handleScroll: true,
-          handleScale: true,
-        });
-
-        volSeries = volChart.addHistogramSeries({
-          priceScaleId: "right",
-          priceLineVisible: false,
-          lastValueVisible: false,
-        });
-
-        volMaSeries = volChart.addLineSeries({
-          color: "#f09a3d",
-          lineWidth: 1,
-          priceScaleId: "right",
-          priceLineVisible: false,
-          lastValueVisible: false,
-        });
-
-        const candles = [],
-          smaArr = [],
-          volArr = [],
-          volMaArr = [];
-
-        for (let i = 0; i < rows.length; i++) {
-          const r = rows[i];
-          const col = isTimechart
-            ? vsaVolColor(r.vsa_color)
-            : vsaColor(r.vsa_color);
-          const vc = vsaVolColor(r.vsa_color);
-
-          let t = parseTime(r.time);
-          if (t <= lastBarTime) t = lastBarTime + 1;
-          lastBarTime = t;
-
-          candles.push({
-            time: t,
-            open: parseFloat(r.open),
-            high: parseFloat(r.high),
-            low: parseFloat(r.low),
-            close: parseFloat(r.close),
-            color: col,
-            borderColor: col,
-            wickColor: col,
-          });
-
-          if (i >= SMA_PERIOD - 1) {
-            let sum = 0;
-            for (let j = i - SMA_PERIOD + 1; j <= i; j++)
-              sum += parseFloat(rows[j].close);
-            smaArr.push({ time: t, value: sum / SMA_PERIOD });
-          }
-
-          volArr.push({ time: t, value: parseFloat(r.volume), color: vc });
-
-          if (i >= VOL_MA_PERIOD - 1) {
-            let sum = 0;
-            for (let j = i - VOL_MA_PERIOD + 1; j <= i; j++)
-              sum += parseFloat(rows[j].volume);
-            volMaArr.push({ time: t, value: sum / VOL_MA_PERIOD });
-          }
-        }
-
-        candleSeries.setData(candles);
-        smaSeries.setData(smaArr);
-        volSeries.setData(volArr);
-        volMaSeries.setData(volMaArr);
-
-        // Sync crosshair between price and volume charts
-        priceChart.subscribeCrosshairMove((param) => {
-          if (param.time)
-            volChart.setCrosshairPosition(0, param.time, volSeries);
-          else volChart.clearCrosshairPosition();
-        });
-
-        // Sync scroll
-        let syncing = false;
-        priceChart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
-          if (syncing || !range) return;
-          syncing = true;
-          volChart.timeScale().setVisibleLogicalRange(range);
-          syncing = false;
-        });
-        volChart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
-          if (syncing || !range) return;
-          syncing = true;
-          priceChart.timeScale().setVisibleLogicalRange(range);
-          syncing = false;
-        });
-
-        priceChart.timeScale().scrollToRealTime();
-      }
-
-      // ============================================================
-      // APPEND BAR (realtime)
-      // ============================================================
-      function appendBar(row, i, isTimechart) {
-        if (!candleSeries) return;
-        const key = currentType + "_" + currentSize;
-        const rows = instData[key];
-        const col = isTimechart
-          ? vsaVolColor(row.vsa_color)
-          : vsaColor(row.vsa_color);
-        const vc = vsaVolColor(row.vsa_color);
-
-        let t = parseTime(row.time);
-        if (t <= lastBarTime) t = lastBarTime + 1;
-        lastBarTime = t;
-
-        candleSeries.update({
-          time: t,
-          open: parseFloat(row.open),
-          high: parseFloat(row.high),
-          low: parseFloat(row.low),
-          close: parseFloat(row.close),
-          color: col,
-          borderColor: col,
-          wickColor: col,
-        });
-
-        if (i >= SMA_PERIOD - 1) {
-          let sum = 0;
-          for (let j = i - SMA_PERIOD + 1; j <= i; j++)
-            sum += parseFloat(rows[j].close);
-          smaSeries.update({ time: t, value: sum / SMA_PERIOD });
-        }
-
-        volSeries.update({ time: t, value: parseFloat(row.volume), color: vc });
-
-        if (i >= VOL_MA_PERIOD - 1) {
-          let sum = 0;
-          for (let j = i - VOL_MA_PERIOD + 1; j <= i; j++)
-            sum += parseFloat(rows[j].volume);
-          volMaSeries.update({ time: t, value: sum / VOL_MA_PERIOD });
-        }
-
-        priceChart.timeScale().scrollToRealTime();
-        volChart.timeScale().scrollToRealTime();
+        handle.addEventListener("mousedown", onStart, { passive: false });
+        handle.addEventListener("touchstart", onStart, { passive: false });
+        window.addEventListener("mousemove", onMove, { passive: false });
+        window.addEventListener("touchmove", onMove, { passive: false });
+        window.addEventListener("mouseup", onEnd);
+        window.addEventListener("touchend", onEnd);
       }
 
       // ============================================================
       // HELPERS
       // ============================================================
       function parseTime(str) {
-        // Normalize all Supabase timestamp formats to valid ISO 8601
-        // Handles: "2026-03-06 22:59:48.280 +0100"
-        //          "2026-03-06 22:59:48.280+00"
-        //          "2026-03-06T22:59:48.280Z"
         let s = str.trim();
-        s = s.replace(/^(\d{4}-\d{2}-\d{2}) /, "$1T"); // space→T between date and time
-        s = s.replace(/(T[\d:.]+) ([+-])/, "$1$2"); // remove space before offset
-        s = s.replace(/([+-]\d{2})(\d{2})$/, "$1:$2"); // +0100 → +01:00
-        s = s.replace(/([+-]\d{2})$/, "$1:00"); // +01 → +01:00
+        s = s.replace(/^(\d{4}-\d{2}-\d{2}) /, "$1T");
+        s = s.replace(/(T[\d:.]+) ([+-])/, "$1$2");
+        s = s.replace(/([+-]\d{2})(\d{2})$/, "$1:$2");
+        s = s.replace(/([+-]\d{2})$/, "$1:00");
         return Math.floor(new Date(s).getTime() / 1000) + LOCAL_OFFSET_SECONDS;
       }
-
-      // Stockholm offset in seconds — CET=+3600, CEST=+7200
-      // Detected at runtime from the browser locale (phone is in Stockholm)
-      const LOCAL_OFFSET_SECONDS = -new Date().getTimezoneOffset() * 60;
 
       function setLive(live) {
         document
@@ -1226,23 +1037,25 @@
         setTimeout(() => t.classList.remove("show"), ms);
       }
 
-      // Move chart panels into correct container on load
+      function esc(s) {
+        return s.replace(/'/g, "\\'");
+      }
+
       function initPanelContainers() {
+        checkOrientation();
         const target = isLandscape
           ? document.getElementById("chart-area-landscape")
           : document.getElementById("chart-area-portrait");
-
         target.appendChild(document.getElementById("price-panel"));
         target.appendChild(document.getElementById("drag-handle"));
         target.appendChild(document.getElementById("volume-panel"));
         target.appendChild(document.getElementById("chart-loading"));
+        initPanelHeights();
       }
 
       // ============================================================
       // START
       // ============================================================
-      checkOrientation();
-      initPanelContainers();
       init();
     </script>
   </body>
