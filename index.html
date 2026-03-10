@@ -35,9 +35,10 @@
   .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border2); flex-shrink: 0; transition: background 0.3s, box-shadow 0.3s; }
   .status-dot.live { background: #3df07a; box-shadow: 0 0 7px #3df07a; }
 
-  .unified-tabs { height: var(--tabs-h); min-height: var(--tabs-h); background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; align-items: center; overflow-x: auto; flex-shrink: 0; padding: 0 8px; gap: 3px; -webkit-overflow-scrolling: touch; }
+  /* FIX: taller tab row, wider buttons, brighter text in portrait */
+  .unified-tabs { height: 40px; min-height: 40px; background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; align-items: center; overflow-x: auto; flex-shrink: 0; padding: 0 8px; gap: 4px; -webkit-overflow-scrolling: touch; }
   .unified-tabs::-webkit-scrollbar { display: none; }
-  .tab-sep { width: 1px; height: 16px; background: var(--border); flex-shrink: 0; margin: 0 3px; }
+  .tab-sep { width: 1px; height: 16px; background: var(--border); flex-shrink: 0; margin: 0 4px; }
 
   .landscape-wrap { display: none; flex: 1; flex-direction: row; overflow: hidden; min-height: 0; }
   .left-panel { width: var(--left-w); min-width: var(--left-w); background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0; }
@@ -47,9 +48,10 @@
   .left-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border2); margin-bottom: 4px; transition: background 0.3s, box-shadow 0.3s; }
   .left-dot.live { background: #3df07a; box-shadow: 0 0 6px #3df07a; }
 
-  .tab { height: 28px; padding: 0 14px; border-radius: 4px; border: 1px solid var(--border2); background: transparent; color: #c8d4e8; font-family: inherit; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: all 0.12s; }
+  /* FIX: wider tabs, brighter color, bigger font */
+  .tab { height: 28px; min-width: 36px; padding: 0 12px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg); color: #a0b4cc; font-family: inherit; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: all 0.12s; }
   .tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .tab.time { font-size: 9px; }
+  .tab.time { font-size: 10px; }
   .vtab { width: 36px; height: 28px; border-radius: 4px; border: 1px solid transparent; background: transparent; color: var(--text2); font-family: inherit; font-size: 9px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.12s; flex-shrink: 0; }
   .vtab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
@@ -170,6 +172,7 @@ let priceChart = null, volChart = null;
 let candleSeries = null, smaSeries = null, volSeries = null, volMaSeries = null;
 
 let pricePanelH = 0, volPanelH = 0, isLandscape = false;
+let lastRenderedTime = 0; // tracks last time value sent to chart — collision guard for appendBar
 
 // ============================================================
 // INIT
@@ -247,13 +250,13 @@ async function loadAndRender() {
   isTimechart = (currentType === 'time');
 
   try {
-    const limit = (currentType === 'time' && currentSize === 1) ? BARS_1MIN : BARS_TO_LOAD;
+    const limit = (currentType === 'time') ? BARS_1MIN : BARS_TO_LOAD;
     if (currentType === 'renko') {
       rows = await sbGet('/rest/v1/renko_bricks?instrument=eq.' + encodeURIComponent(currentInst) + '&brick_size=eq.' + currentSize + '&order=bar_index.desc&limit=' + limit);
-      rows.reverse(); // fetch latest N descending, reverse to ascending for chart
+      rows.reverse();
     } else {
       rows = await sbGet('/rest/v1/time_bars?instrument=eq.' + encodeURIComponent(currentInst) + '&timeframe=eq.' + currentSize + '&order=bar_index.desc&limit=' + limit);
-      rows.reverse(); // fetch latest N descending, reverse to ascending for chart
+      rows.reverse();
     }
     rows = rows || [];
     lastBarIndex = rows.length > 0 ? rows[rows.length - 1].bar_index : -1;
@@ -286,15 +289,24 @@ async function doPoll() {
       for (const r of newRows) rows.push(r);
       lastBarIndex = rows[rows.length - 1].bar_index;
       if (newRows.length === 1) {
-        appendBar(newRows[0]); // single bar — fast update
+        appendBar(newRows[0]);
       } else {
-        rebuildSeriesData(); // multiple bars — rebuild all series to avoid dropped bars
+        rebuildSeriesData();
       }
     }
   } catch(e) { setLive(false); console.error('Poll:', e); }
 
   const wait = Math.max(0, POLL_MIN_MS - (Date.now() - t0));
   if (pollActive) pollTimer = setTimeout(doPoll, wait);
+}
+
+// ============================================================
+// TIME HELPER — used consistently everywhere
+// ============================================================
+function rowTime(r) {
+  // Renko: use fixed_time (deduped by DB trigger), fallback to bar_start_time
+  // Time chart: use bar_start_time (minute bars, no collision risk)
+  return parseTime(isTimechart ? r.bar_start_time : (r.fixed_time || r.bar_start_time));
 }
 
 // ============================================================
@@ -312,7 +324,9 @@ function buildCharts() {
 
   const priceEl = document.getElementById('price-panel');
   const volEl   = document.getElementById('volume-panel');
-  const layout  = { background: { color: '#090b0f' }, textColor: '#8fa8c8', fontFamily: "'SF Mono','Fira Code',monospace", fontSize: 10 };
+
+  // FIX: brighter textColor for price scale and time axis labels
+  const layout  = { background: { color: '#090b0f' }, textColor: '#8a9fc0', fontFamily: "'SF Mono','Fira Code',monospace", fontSize: 10 };
   const grid    = { vertLines: { color: '#0c0f14' }, horzLines: { color: '#0c0f14' } };
   const cross   = { mode: LightweightCharts.CrosshairMode.Normal, vertLine: { color: '#a0c4ffcc', width: 1, style: 0, labelBackgroundColor: '#1a2540' }, horzLine: { color: '#a0c4ffcc', width: 1, style: 0, labelBackgroundColor: '#1a2540' } };
 
@@ -330,9 +344,7 @@ function buildCharts() {
     const r   = rows[i];
     const col = vsaCandleColor(r.vsa_color, isTimechart);
     const vc  = vsaVolColor(r.vsa_color);
-    // Both renko and time chart use parseTime — fixed_time for renko, bar_start_time for time
-    // Collision guard below (t <= lastT) handles any duplicate second-level values
-    let t = parseTime(isTimechart ? r.bar_start_time : (r.fixed_time || r.bar_start_time));
+    let t = rowTime(r);
     if (t <= lastT) t = lastT + 1;
     lastT = t;
     candles.push({ time: t, open: +r.open, high: +r.high, low: +r.low, close: +r.close, color: col, borderColor: col, wickColor: col });
@@ -341,6 +353,7 @@ function buildCharts() {
     if (i >= VOL_MA_PERIOD - 1) { let s = 0; for (let j = i-VOL_MA_PERIOD+1; j<=i; j++) s += +rows[j].volume; volMaArr.push({ time: t, value: s/VOL_MA_PERIOD }); }
   }
 
+  lastRenderedTime = lastT; // track for appendBar collision guard
   candleSeries.setData(candles);
   smaSeries.setData(smaArr);
   volSeries.setData(volArr);
@@ -350,38 +363,33 @@ function buildCharts() {
   priceChart.timeScale().subscribeVisibleLogicalRangeChange(range => { if (syncing||!range) return; syncing=true; volChart.timeScale().setVisibleLogicalRange(range); syncing=false; });
   volChart.timeScale().subscribeVisibleLogicalRangeChange(range => { if (syncing||!range) return; syncing=true; priceChart.timeScale().setVisibleLogicalRange(range); syncing=false; });
 
-  // Sync crosshair between price and volume charts
+  // FIX: Crosshair sync — setCrosshairPosition(price, time, series) not pixel coords
   let crossSyncing = false;
   priceChart.subscribeCrosshairMove(param => {
-    if (crossSyncing) return;
+    if (crossSyncing || !volSeries) return;
     crossSyncing = true;
-    if (!param.point || !param.time) {
+    if (!param.time) {
       volChart.clearCrosshairPosition();
     } else {
-      // Get volume value at hovered bar to show dot on vol panel
-      const volData = param.seriesData && param.seriesData.get ? null : null;
-      const volBar = volSeries.dataByIndex ? null : null;
-      // Use time to find matching volume bar
-      const t = param.time;
-      const idx = rows.findIndex(r => parseTime(isTimechart ? r.bar_start_time : (r.fixed_time || r.bar_start_time)) === t);
+      const idx = rows.findIndex(r => rowTime(r) === param.time);
       const volVal = (idx >= 0) ? +rows[idx].volume : 0;
-      volChart.setCrosshairPosition(volVal, t, volSeries); // (price, time, series)
+      volChart.setCrosshairPosition(volVal, param.time, volSeries);
     }
     crossSyncing = false;
   });
   volChart.subscribeCrosshairMove(param => {
-    if (crossSyncing) return;
+    if (crossSyncing || !candleSeries) return;
     crossSyncing = true;
-    if (!param.point || !param.time) {
+    if (!param.time) {
       priceChart.clearCrosshairPosition();
     } else {
-      const t = param.time;
-      const idx = rows.findIndex(r => parseTime(isTimechart ? r.bar_start_time : (r.fixed_time || r.bar_start_time)) === t);
+      const idx = rows.findIndex(r => rowTime(r) === param.time);
       const closeVal = (idx >= 0) ? +rows[idx].close : 0;
-      priceChart.setCrosshairPosition(closeVal, t, candleSeries); // (price, time, series)
+      priceChart.setCrosshairPosition(closeVal, param.time, candleSeries);
     }
     crossSyncing = false;
   });
+
   priceChart.timeScale().scrollToRealTime();
 }
 
@@ -396,7 +404,7 @@ function rebuildSeriesData() {
     const r   = rows[i];
     const col = vsaCandleColor(r.vsa_color, isTimechart);
     const vc  = vsaVolColor(r.vsa_color);
-    let t = parseTime(isTimechart ? r.bar_start_time : (r.fixed_time || r.bar_start_time));
+    let t = rowTime(r);
     if (t <= lastT) t = lastT + 1;
     lastT = t;
     candles.push({ time: t, open: +r.open, high: +r.high, low: +r.low, close: +r.close, color: col, borderColor: col, wickColor: col });
@@ -404,6 +412,7 @@ function rebuildSeriesData() {
     volArr.push({ time: t, value: +r.volume, color: vc });
     if (i >= VOL_MA_PERIOD - 1) { let s = 0; for (let j = i-VOL_MA_PERIOD+1; j<=i; j++) s += +rows[j].volume; volMaArr.push({ time: t, value: s/VOL_MA_PERIOD }); }
   }
+  lastRenderedTime = lastT; // track for appendBar collision guard
   candleSeries.setData(candles);
   smaSeries.setData(smaArr);
   volSeries.setData(volArr);
@@ -420,7 +429,9 @@ function appendBar(r) {
   const i   = rows.length - 1;
   const col = vsaCandleColor(r.vsa_color, isTimechart);
   const vc  = vsaVolColor(r.vsa_color);
-  const t   = parseTime(isTimechart ? r.bar_start_time : (r.fixed_time || r.bar_start_time));
+  let t     = rowTime(r);
+  if (t <= lastRenderedTime) t = lastRenderedTime + 1; // collision guard
+  lastRenderedTime = t;
   candleSeries.update({ time: t, open: +r.open, high: +r.high, low: +r.low, close: +r.close, color: col, borderColor: col, wickColor: col });
   if (i >= SMA_PERIOD - 1) { let s = 0; for (let j = i-SMA_PERIOD+1; j<=i; j++) s += +rows[j].close; smaSeries.update({ time: t, value: s/SMA_PERIOD }); }
   volSeries.update({ time: t, value: +r.volume, color: vc });
@@ -468,7 +479,7 @@ function onResize() {
     target.appendChild(document.getElementById('drag-handle'));
     target.appendChild(document.getElementById('volume-panel'));
     target.appendChild(document.getElementById('chart-loading'));
-    initPanelHeights(); // must set heights before buildCharts
+    initPanelHeights();
     buildCharts(); return;
   }
   initPanelHeights(); resizeCharts();
@@ -476,7 +487,7 @@ function onResize() {
 
 function initPanelHeights() {
   checkOrientation();
-  const totalH = isLandscape ? window.innerHeight - 12 : window.innerHeight - 44 - 36 - 12;
+  const totalH = isLandscape ? window.innerHeight - 12 : window.innerHeight - 44 - 40 - 12;
   pricePanelH = Math.floor(totalH * 0.70);
   volPanelH   = totalH - pricePanelH;
   applyPanelHeights();
