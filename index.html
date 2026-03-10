@@ -819,7 +819,7 @@
           let t = rowTime(r);
           if (t <= lastT) t = lastT + 1;
           lastT = t;
-          timeToIdx[t] = i; // map chart time → row index for crosshair
+          timeToIdx[+t] = i; // map chart time → row index (numeric key)
           candles.push({
             time: t,
             open: +r.open,
@@ -864,23 +864,26 @@
           syncing = false;
         });
 
-        // Crosshair sync — use param.seriesData to get exact values at hovered bar
-        // This avoids any time lookup issues entirely
+        // Crosshair sync
+        // Each chart only has its own series in param.seriesData — cross-chart lookup via timeToIdx
+        // +param.time forces numeric key to match timeToIdx (which stores numeric keys)
         let crossSyncing = false;
         priceChart.subscribeCrosshairMove((param) => {
           if (crossSyncing || !volSeries) return;
           crossSyncing = true;
-          if (!param.time || !param.seriesData) {
+          if (!param.time) {
             volChart.clearCrosshairPosition();
           } else {
-            const candleData = param.seriesData.get(candleSeries);
-            const volData = param.seriesData.get(volSeries);
-            if (candleData && volData) {
-              volChart.setCrosshairPosition(
-                volData.value,
-                param.time,
-                volSeries,
-              );
+            // candleData is available directly — candleSeries belongs to priceChart
+            const candleData =
+              param.seriesData && param.seriesData.get(candleSeries);
+            if (candleData) {
+              // volume comes from timeToIdx lookup — volSeries belongs to volChart
+              const idx = timeToIdx[+param.time];
+              const vol = idx != null && rows[idx] ? +rows[idx].volume : null;
+              if (vol != null)
+                volChart.setCrosshairPosition(vol, param.time, volSeries);
+              else volChart.clearCrosshairPosition();
             } else {
               volChart.clearCrosshairPosition();
             }
@@ -890,17 +893,22 @@
         volChart.subscribeCrosshairMove((param) => {
           if (crossSyncing || !candleSeries) return;
           crossSyncing = true;
-          if (!param.time || !param.seriesData) {
+          if (!param.time) {
             priceChart.clearCrosshairPosition();
           } else {
-            const volData = param.seriesData.get(volSeries);
-            const candleData = param.seriesData.get(candleSeries);
-            if (volData && candleData) {
-              priceChart.setCrosshairPosition(
-                candleData.close,
-                param.time,
-                candleSeries,
-              );
+            // volData is available directly — volSeries belongs to volChart
+            const volData = param.seriesData && param.seriesData.get(volSeries);
+            if (volData) {
+              // close comes from timeToIdx lookup — candleSeries belongs to priceChart
+              const idx = timeToIdx[+param.time];
+              const close = idx != null && rows[idx] ? +rows[idx].close : null;
+              if (close != null)
+                priceChart.setCrosshairPosition(
+                  close,
+                  param.time,
+                  candleSeries,
+                );
+              else priceChart.clearCrosshairPosition();
             } else {
               priceChart.clearCrosshairPosition();
             }
@@ -929,7 +937,7 @@
           let t = rowTime(r);
           if (t <= lastT) t = lastT + 1;
           lastT = t;
-          timeToIdx[t] = i; // map chart time → row index for crosshair
+          timeToIdx[+t] = i; // map chart time → row index (numeric key)
           candles.push({
             time: t,
             open: +r.open,
@@ -973,7 +981,7 @@
         let t = rowTime(r);
         if (t <= lastRenderedTime) t = lastRenderedTime + 1; // collision guard
         lastRenderedTime = t;
-        timeToIdx[t] = rows.length - 1; // map chart time → row index
+        timeToIdx[+t] = rows.length - 1; // map chart time → row index (numeric key)
         candleSeries.update({
           time: t,
           open: +r.open,
