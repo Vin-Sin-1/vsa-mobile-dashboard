@@ -47,7 +47,7 @@
   .left-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border2); margin-bottom: 4px; transition: background 0.3s, box-shadow 0.3s; }
   .left-dot.live { background: #3df07a; box-shadow: 0 0 6px #3df07a; }
 
-  .tab { height: 24px; padding: 0 9px; border-radius: 4px; border: 1px solid transparent; background: transparent; color: var(--text2); font-family: inherit; font-size: 10px; font-weight: 700; letter-spacing: 0.05em; cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: all 0.12s; }
+  .tab { height: 28px; padding: 0 14px; border-radius: 4px; border: 1px solid var(--border2); background: transparent; color: #c8d4e8; font-family: inherit; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: all 0.12s; }
   .tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
   .tab.time { font-size: 9px; }
   .vtab { width: 36px; height: 28px; border-radius: 4px; border: 1px solid transparent; background: transparent; color: var(--text2); font-family: inherit; font-size: 9px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.12s; flex-shrink: 0; }
@@ -312,7 +312,7 @@ function buildCharts() {
 
   const priceEl = document.getElementById('price-panel');
   const volEl   = document.getElementById('volume-panel');
-  const layout  = { background: { color: '#090b0f' }, textColor: '#4a5a72', fontFamily: "'SF Mono','Fira Code',monospace", fontSize: 10 };
+  const layout  = { background: { color: '#090b0f' }, textColor: '#8fa8c8', fontFamily: "'SF Mono','Fira Code',monospace", fontSize: 10 };
   const grid    = { vertLines: { color: '#0c0f14' }, horzLines: { color: '#0c0f14' } };
   const cross   = { mode: LightweightCharts.CrosshairMode.Normal, vertLine: { color: '#a0c4ffcc', width: 1, style: 0, labelBackgroundColor: '#1a2540' }, horzLine: { color: '#a0c4ffcc', width: 1, style: 0, labelBackgroundColor: '#1a2540' } };
 
@@ -330,9 +330,9 @@ function buildCharts() {
     const r   = rows[i];
     const col = vsaCandleColor(r.vsa_color, isTimechart);
     const vc  = vsaVolColor(r.vsa_color);
-    // Renko uses bar_index as time (avoids timestamp collision — fixed_time only 1ms apart = same second after parseTime)
-    // Time chart uses bar_start_time (bars are minutes apart, no collision risk)
-    let t = isTimechart ? parseTime(r.bar_start_time) : r.bar_index;
+    // Both renko and time chart use parseTime — fixed_time for renko, bar_start_time for time
+    // Collision guard below (t <= lastT) handles any duplicate second-level values
+    let t = parseTime(isTimechart ? r.bar_start_time : (r.fixed_time || r.bar_start_time));
     if (t <= lastT) t = lastT + 1;
     lastT = t;
     candles.push({ time: t, open: +r.open, high: +r.high, low: +r.low, close: +r.close, color: col, borderColor: col, wickColor: col });
@@ -363,9 +363,9 @@ function buildCharts() {
       const volBar = volSeries.dataByIndex ? null : null;
       // Use time to find matching volume bar
       const t = param.time;
-      const idx = rows.findIndex(r => (isTimechart ? parseTime(r.bar_start_time) : r.bar_index) === t);
+      const idx = rows.findIndex(r => parseTime(isTimechart ? r.bar_start_time : (r.fixed_time || r.bar_start_time)) === t);
       const volVal = (idx >= 0) ? +rows[idx].volume : 0;
-      volChart.setCrosshairPosition(param.point.x, volVal, volSeries);
+      volChart.setCrosshairPosition(volVal, t, volSeries); // (price, time, series)
     }
     crossSyncing = false;
   });
@@ -376,9 +376,9 @@ function buildCharts() {
       priceChart.clearCrosshairPosition();
     } else {
       const t = param.time;
-      const idx = rows.findIndex(r => (isTimechart ? parseTime(r.bar_start_time) : r.bar_index) === t);
+      const idx = rows.findIndex(r => parseTime(isTimechart ? r.bar_start_time : (r.fixed_time || r.bar_start_time)) === t);
       const closeVal = (idx >= 0) ? +rows[idx].close : 0;
-      priceChart.setCrosshairPosition(param.point.x, closeVal, candleSeries);
+      priceChart.setCrosshairPosition(closeVal, t, candleSeries); // (price, time, series)
     }
     crossSyncing = false;
   });
@@ -396,7 +396,7 @@ function rebuildSeriesData() {
     const r   = rows[i];
     const col = vsaCandleColor(r.vsa_color, isTimechart);
     const vc  = vsaVolColor(r.vsa_color);
-    let t = isTimechart ? parseTime(r.bar_start_time) : r.bar_index;
+    let t = parseTime(isTimechart ? r.bar_start_time : (r.fixed_time || r.bar_start_time));
     if (t <= lastT) t = lastT + 1;
     lastT = t;
     candles.push({ time: t, open: +r.open, high: +r.high, low: +r.low, close: +r.close, color: col, borderColor: col, wickColor: col });
@@ -420,7 +420,7 @@ function appendBar(r) {
   const i   = rows.length - 1;
   const col = vsaCandleColor(r.vsa_color, isTimechart);
   const vc  = vsaVolColor(r.vsa_color);
-  const t   = isTimechart ? parseTime(r.bar_start_time) : r.bar_index;
+  const t   = parseTime(isTimechart ? r.bar_start_time : (r.fixed_time || r.bar_start_time));
   candleSeries.update({ time: t, open: +r.open, high: +r.high, low: +r.low, close: +r.close, color: col, borderColor: col, wickColor: col });
   if (i >= SMA_PERIOD - 1) { let s = 0; for (let j = i-SMA_PERIOD+1; j<=i; j++) s += +rows[j].close; smaSeries.update({ time: t, value: s/SMA_PERIOD }); }
   volSeries.update({ time: t, value: +r.volume, color: vc });
