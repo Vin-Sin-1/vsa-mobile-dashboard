@@ -73,9 +73,10 @@
   .toast.show { transform: translateX(-50%) translateY(0); }
 
   @media (orientation: portrait) {
-    .header { display: flex; }
-    .unified-tabs { display: flex; }
-    .portrait-content { display: flex; }
+    #app { flex-direction: column; }
+    .header { display: flex; order: 3; border-top: 1px solid var(--border); border-bottom: none; }
+    .unified-tabs { display: flex; order: 2; border-top: 1px solid var(--border); border-bottom: none; }
+    .portrait-content { display: flex; order: 1; flex: 1; }
     .landscape-wrap { display: none; }
   }
   @media (orientation: landscape) {
@@ -335,7 +336,7 @@ function buildCharts() {
   smaSeries    = priceChart.addLineSeries({ color: '#f09a3d', lineWidth: 1, priceLineVisible: false, lastValueVisible: false });
 
   volChart = LightweightCharts.createChart(volEl, { width: volEl.clientWidth, height: volEl.clientHeight, layout, grid, crosshair: { ...cross, horzLine: { visible: false, labelVisible: false } }, rightPriceScale: { borderColor: '#161a23', scaleMargins: { top: 0.1, bottom: 0.0 } }, timeScale: { borderColor: '#161a23', timeVisible: true, secondsVisible: false }, handleScroll: true, handleScale: true });
-  volSeries   = volChart.addHistogramSeries({ priceScaleId: 'right', priceLineVisible: false, lastValueVisible: false });
+  volSeries   = volChart.addHistogramSeries({ priceScaleId: 'right', priceLineVisible: false, lastValueVisible: true });
   volMaSeries = volChart.addLineSeries({ color: '#f09a3d', lineWidth: 1, priceScaleId: 'right', priceLineVisible: false, lastValueVisible: false });
 
   const candles = [], smaArr = [], volArr = [], volMaArr = [];
@@ -373,7 +374,7 @@ function buildCharts() {
     } else {
       const idx = rows.findIndex(r => rowTime(r) === param.time);
       const volVal = (idx >= 0) ? +rows[idx].volume : 0;
-      volChart.setCrosshairPosition(volVal, param.time, volSeries);
+      volChart.setCrosshairPosition(volVal, param.time, volSeries); // dot on histogram bar
     }
     crossSyncing = false;
   });
