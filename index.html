@@ -864,38 +864,46 @@
           syncing = false;
         });
 
-        // Crosshair sync — use timeToIdx map built during buildCharts/rebuildSeriesData
-        // param.time is the collision-guarded chart time, which matches timeToIdx keys exactly
+        // Crosshair sync — use param.seriesData to get exact values at hovered bar
+        // This avoids any time lookup issues entirely
         let crossSyncing = false;
         priceChart.subscribeCrosshairMove((param) => {
           if (crossSyncing || !volSeries) return;
           crossSyncing = true;
-          if (!param.time) {
+          if (!param.time || !param.seriesData) {
             volChart.clearCrosshairPosition();
           } else {
-            const idx = timeToIdx[param.time];
-            const row = idx != null ? rows[idx] : null;
-            if (row)
-              volChart.setCrosshairPosition(+row.volume, param.time, volSeries);
-            else volChart.clearCrosshairPosition();
+            const candleData = param.seriesData.get(candleSeries);
+            const volData = param.seriesData.get(volSeries);
+            if (candleData && volData) {
+              volChart.setCrosshairPosition(
+                volData.value,
+                param.time,
+                volSeries,
+              );
+            } else {
+              volChart.clearCrosshairPosition();
+            }
           }
           crossSyncing = false;
         });
         volChart.subscribeCrosshairMove((param) => {
           if (crossSyncing || !candleSeries) return;
           crossSyncing = true;
-          if (!param.time) {
+          if (!param.time || !param.seriesData) {
             priceChart.clearCrosshairPosition();
           } else {
-            const idx = timeToIdx[param.time];
-            const row = idx != null ? rows[idx] : null;
-            if (row)
+            const volData = param.seriesData.get(volSeries);
+            const candleData = param.seriesData.get(candleSeries);
+            if (volData && candleData) {
               priceChart.setCrosshairPosition(
-                +row.close,
+                candleData.close,
                 param.time,
                 candleSeries,
               );
-            else priceChart.clearCrosshairPosition();
+            } else {
+              priceChart.clearCrosshairPosition();
+            }
           }
           crossSyncing = false;
         });
