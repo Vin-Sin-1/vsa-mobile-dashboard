@@ -1,0 +1,17 @@
+{
+  "name": "VSA Waves",
+  "short_name": "Waves",
+  "description": "VSA Wave Detector - GC JUN26",
+  "start_url": "/vsa-mobile-dashboard/waves.html",
+  "display": "standalone",
+  "background_color": "#090b0f",
+  "theme_color": "#090b0f",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/vsa-mobile-dashboard/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
